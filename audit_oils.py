@@ -1,10 +1,8 @@
 
 from sqlalchemy import engine_from_config
 
-from pyramid.paster import (
-    get_appsettings,
-    setup_logging,
-    )
+from pyramid.paster import (get_appsettings,
+                            setup_logging)
 
 from oil_library.models import DBSession, Base, Oil, Toxicity
 
