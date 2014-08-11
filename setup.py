@@ -30,6 +30,7 @@ setup(name='oil_library_api',
                     '  main = oil_library_api:main\n'
                     '[console_scripts]\n'
                     '  init_oil_library = oil_library_api.scripts.initdb:main\n'
+                    '  audit_oil_library = oil_library_api.scripts.initdb:audit\n'
                     '  export_oil_library = oil_library_api.scripts.exportdb:main\n'
                     ),
       paster_plugins=['pyramid'],
