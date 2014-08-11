@@ -199,29 +199,17 @@ def add_toxicity_effective_concentrations(oil, row_dict):
 
 def add_toxicity_lethal_concentrations(oil, row_dict):
     for i in range(1, 4):
-        species = 'Tox_LC(%d)Species' % (i)
-        hour24 = 'Tox_LC(%d)24h' % (i)
-        hour48 = 'Tox_LC(%d)48h' % (i)
-        hour96 = 'Tox_LC(%d)96h' % (i)
-
         obj_args = ('Species', '24h', '48h', '96h')
-        lc_columns = ['Tox_LC({0}){1}'.format(i, a)
+        row_fields = ['Tox_LC({0}){1}'.format(i, a)
                       for a in obj_args]
-        print any([row_dict.get(k) for k in lc_columns])
 
-        if row_dict.get(species) or row_dict.get(hour24) or row_dict.get(hour48) or row_dict.get(hour96):
+        if any([row_dict.get(k) for k in row_fields]):
             toxargs = {}
-            lbl_offset = len(str(i)) + 8
             toxargs['Toxicity Type'] = 'LC'
-            print ' species[lbl_offset:] =', species[lbl_offset:]
-            toxargs[species[lbl_offset:]] = row_dict.get(species)
-            toxargs[hour24[lbl_offset:]] = row_dict.get(hour24)
-            toxargs[hour48[lbl_offset:]] = row_dict.get(hour48)
-            toxargs[hour96[lbl_offset:]] = row_dict.get(hour96)
 
-            print 'LC column names1:', lc_columns
-            print [row_dict.get(k) for k in lc_columns]
-            print 'toxargs:', toxargs
+            for col, arg in zip(row_fields, obj_args):
+                toxargs[arg] = row_dict.get(col)
+
             oil.toxicities.append(Toxicity(**toxargs))
 
 

@@ -25,7 +25,7 @@ setup(name='oil_library_api',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      install_requires=['cornice', 'waitress'],
+      install_requires=['cornice', 'waitress', 'pyramid_mako'],
       entry_points=('[paste.app_factory]\n'
                     '  main = oil_library_api:main\n'
                     '[console_scripts]\n'
