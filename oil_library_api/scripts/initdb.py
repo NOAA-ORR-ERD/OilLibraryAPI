@@ -4,10 +4,8 @@ import transaction
 
 from sqlalchemy import engine_from_config
 
-from pyramid.paster import (
-    get_appsettings,
-    setup_logging,
-    )
+from pyramid.paster import (get_appsettings,
+                            setup_logging)
 
 from pyramid.scripts.common import parse_vars
 
@@ -120,8 +118,7 @@ def add_synonyms(session, oil, row_dict):
 def add_densities(oil, row_dict):
     for i in range(1, 5):
         obj_args = ('(kg/m^3)', 'Ref Temp (K)', 'Weathering')
-        row_fields = ['Density#{0} {1}'.format(i, a)
-                      for a in obj_args]
+        row_fields = ['Density#{0} {1}'.format(i, a) for a in obj_args]
 
         if any([row_dict.get(k) for k in row_fields]):
             densityargs = {}
@@ -135,8 +132,7 @@ def add_densities(oil, row_dict):
 def add_kinematic_viscosities(oil, row_dict):
     for i in range(1, 7):
         obj_args = ('(m^2/s)', 'Ref Temp (K)', 'Weathering')
-        row_fields = ['KVis#{0} {1}'.format(i, a)
-                      for a in obj_args]
+        row_fields = ['KVis#{0} {1}'.format(i, a) for a in obj_args]
 
         if any([row_dict.get(k) for k in row_fields]):
             kvisargs = {}
@@ -150,8 +146,7 @@ def add_kinematic_viscosities(oil, row_dict):
 def add_dynamic_viscosities(oil, row_dict):
     for i in range(1, 7):
         obj_args = ('(kg/ms)', 'Ref Temp (K)', 'Weathering')
-        row_fields = ['DVis#{0} {1}'.format(i, a)
-                      for a in obj_args]
+        row_fields = ['DVis#{0} {1}'.format(i, a) for a in obj_args]
 
         if any([row_dict.get(k) for k in row_fields]):
             dvisargs = {}
@@ -165,8 +160,7 @@ def add_dynamic_viscosities(oil, row_dict):
 def add_distillation_cuts(oil, row_dict):
     for i in range(1, 16):
         obj_args = ('Vapor Temp (K)', 'Liquid Temp (K)', 'Fraction')
-        row_fields = ['Cut#{0} {1}'.format(i, a)
-                      for a in obj_args]
+        row_fields = ['Cut#{0} {1}'.format(i, a) for a in obj_args]
 
         if any([row_dict.get(k) for k in row_fields]):
             cutargs = {}
@@ -180,8 +174,7 @@ def add_distillation_cuts(oil, row_dict):
 def add_toxicity_effective_concentrations(oil, row_dict):
     for i in range(1, 4):
         obj_args = ('Species', '24h', '48h', '96h')
-        row_fields = ['Tox_EC({0}){1}'.format(i, a)
-                      for a in obj_args]
+        row_fields = ['Tox_EC({0}){1}'.format(i, a) for a in obj_args]
 
         if any([row_dict.get(k) for k in row_fields]):
             toxargs = {}
@@ -196,8 +189,7 @@ def add_toxicity_effective_concentrations(oil, row_dict):
 def add_toxicity_lethal_concentrations(oil, row_dict):
     for i in range(1, 4):
         obj_args = ('Species', '24h', '48h', '96h')
-        row_fields = ['Tox_LC({0}){1}'.format(i, a)
-                      for a in obj_args]
+        row_fields = ['Tox_LC({0}){1}'.format(i, a) for a in obj_args]
 
         if any([row_dict.get(k) for k in row_fields]):
             toxargs = {}
