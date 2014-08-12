@@ -209,7 +209,7 @@ def audit_database(settings):
     with transaction.manager:
         session = DBSession()
 
-        sys.stderr.write('Auditing the records in database')
+        sys.stderr.write('Auditing the records in database...')
         for o in session.query(Oil):
             if 1 and o.synonyms:
                     print
@@ -260,7 +260,29 @@ def audit_database(settings):
         print 'finished!!!'
 
 
+def export_database(settings):
+    '''
+       Just a quick check of the data values that we loaded
+       when we initialized the database.
+    '''
+    with transaction.manager:
+        session = DBSession()
+
+        sys.stderr.write('Exporting the records in database...')
+        for o in session.query(Oil):
+            print o
+            print o.tojson()
+
+
+def export(argv=sys.argv):
+    main(argv, export_database)
+
+
 def audit(argv=sys.argv):
+    main(argv, audit_database)
+
+
+def main(argv=sys.argv, proc=load_database):
     if len(argv) < 2:
         usage(argv)
 
@@ -272,25 +294,7 @@ def audit(argv=sys.argv):
 
     try:
         initialize_sql(settings)
-        audit_database(settings)
+        proc(settings)
     except:
-        print "FAILED TO AUDIT OIL LIBRARY DATABASE\n"
-        raise
-
-
-def main(argv=sys.argv):
-    if len(argv) < 2:
-        usage(argv)
-
-    config_uri = argv[1]
-    options = parse_vars(argv[2:])
-
-    setup_logging(config_uri)
-    settings = get_appsettings(config_uri, options=options)
-
-    try:
-        initialize_sql(settings)
-        load_database(settings)
-    except:
-        print "FAILED TO CREATED OIL LIBRARY DATABASE \n"
+        print "{0} FAILED\n".format(proc)
         raise
