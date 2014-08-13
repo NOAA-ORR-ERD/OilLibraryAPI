@@ -201,6 +201,79 @@ def add_toxicity_lethal_concentrations(oil, row_dict):
             oil.toxicities.append(Toxicity(**toxargs))
 
 
+def audit_distillation_cuts(settings):
+    '''
+       Just a quick check of the data values that we loaded
+       when we initialized the database.
+    '''
+    with transaction.manager:
+        session = DBSession()
+
+        sys.stderr.write('Auditing the records in database...')
+        num_cuts = []
+        liquid_temp = []
+        vapor_temp = []
+        fraction = []
+        for o in session.query(Oil):
+            num_cuts.append(len(o.cuts))
+            for i, cut in enumerate(o.cuts):
+                if len(liquid_temp) > i:
+                    if cut.liquid_temp:
+                        liquid_temp[i].append(cut.liquid_temp)
+                    if cut.vapor_temp:
+                        vapor_temp[i].append(cut.vapor_temp)
+                    if cut.fraction:
+                        fraction[i].append(cut.fraction)
+                else:
+                    liquid_temp.append([])
+                    vapor_temp.append([])
+                    fraction.append([])
+
+        print ('\nNumber of cut entries (min, max, avg): ({0}, {1}, {2})'
+               .format(min(num_cuts),
+                       max(num_cuts),
+                       float(sum(num_cuts)) / len(num_cuts))
+               )
+
+        print '\nLiquid Temperature:'
+        for i in range(len(liquid_temp)):
+            if len(liquid_temp[i]) > 0:
+                temp = liquid_temp[i]
+                avg = float(sum(temp)) / len(temp)
+                print ('\tCut #{0} (set-size, min, max, avg): '
+                       '({1}, {2}, {3}, {4})'
+                       .format(i, len(temp), min(temp), max(temp), avg))
+            else:
+                temp = liquid_temp[i]
+                print ('\tCut #{0} (set-size, min, max, avg): '
+                       '({1}, {2}, {3}, {4})'
+                       .format(i, len(temp), None, None, None))
+
+        print '\nVapor Temperature:'
+        for i in range(len(vapor_temp)):
+            print ('\tCut #{0} (set-size, min, max, avg): '
+                   '({1}, {2}, {3}, {4})'
+                   .format(i,
+                           len(vapor_temp[i]),
+                           min(vapor_temp[i]),
+                           max(vapor_temp[i]),
+                           float(sum(vapor_temp[i])) / len(vapor_temp[i]))
+                   )
+
+        print '\nFraction:'
+        for i in range(len(fraction)):
+            print ('\tCut #{0} (set-size, min, max, avg): '
+                   '({1}, {2}, {3}, {4})'
+                   .format(i,
+                           len(fraction[i]),
+                           min(fraction[i]),
+                           max(fraction[i]),
+                           float(sum(fraction[i])) / len(fraction[i]))
+                   )
+
+        print 'finished!!!'
+
+
 def audit_database(settings):
     '''
        Just a quick check of the data values that we loaded
@@ -276,6 +349,10 @@ def export_database(settings):
 
 def export(argv=sys.argv):
     main(argv, export_database)
+
+
+def audit_cuts(argv=sys.argv):
+    main(argv, audit_distillation_cuts)
 
 
 def audit(argv=sys.argv):
