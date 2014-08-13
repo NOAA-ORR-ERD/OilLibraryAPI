@@ -12,4 +12,11 @@ oil_api = Service(name='oil', path='/oil', description="List All Oils")
 def get_oils(request):
     '''Returns all oils in JSON format'''
     oils = DBSession.query(Oil)
-    return [o.tojson() for o in oils]
+    return [{'name': o.name,
+             'adios_oil_id': o.adios_oil_id,
+             'api': o.api,
+             'location': o.location,
+             'field_name': o.field_name,
+             'product_type': o.product_type,
+             'oil_class': o.oil_class}
+            for o in oils]
