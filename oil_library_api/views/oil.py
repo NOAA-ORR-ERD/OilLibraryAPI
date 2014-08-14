@@ -5,10 +5,12 @@ from pyramid.httpexceptions import HTTPNotFound
 
 from sqlalchemy.orm.exc import NoResultFound
 
+from ..common.views import cors_policy, obj_id_from_url
 from ..models import DBSession
 from oil_library.models import Oil
 
-oil_api = Service(name='oil', path='/oil*obj_id', description="List All Oils")
+oil_api = Service(name='oil', path='/oil*obj_id',
+                  description="List All Oils",  cors_policy=cors_policy)
 
 
 @oil_api.get()
@@ -33,10 +35,3 @@ def get_oils(request):
             return oil.tojson()
         except NoResultFound:
             raise HTTPNotFound()
-
-
-def obj_id_from_url(request):
-    # the pyramid URL parser returns a tuple of 0 or more
-    # matching items, at least when using the * wild card
-    obj_id = request.matchdict.get('obj_id')
-    return obj_id[0] if obj_id else None

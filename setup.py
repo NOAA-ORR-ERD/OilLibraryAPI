@@ -9,6 +9,12 @@ with open(os.path.join(here, 'README.rst')) as f:
     README = f.read()
 
 
+requires = ['cornice',
+            'waitress',
+            'WebTest',
+            'webhelpers2>=2.0b5']
+
+
 setup(name='oil_library_api',
       version=0.1,
       description='OilLibraryAPI',
@@ -25,7 +31,7 @@ setup(name='oil_library_api',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      install_requires=['cornice', 'waitress', 'pyramid_mako'],
+      install_requires=requires,
       entry_points=('[paste.app_factory]\n'
                     '  main = oil_library_api:main\n'
                     '[console_scripts]\n'

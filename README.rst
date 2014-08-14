@@ -1,4 +1,4 @@
-Documentation
+OilLibraryAPI
 =============
 
-Put a brief description of 'OilLibraryAPI'.
+A web service that interfaces with the oil library database.
