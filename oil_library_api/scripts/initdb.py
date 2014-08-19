@@ -71,15 +71,18 @@ def load_database(settings):
         print '\nPurging Categories...'
         num_purged = clear_categories(session)
         print '{0} categories purged.'.format(num_purged)
+        print 'Orphaned categories:', session.query(Category).all()
 
         print 'Loading Categories...'
         load_categories(session)
         print 'Finished!!!'
 
-        print 'Here are our categories...'
+        print 'Here are our newly built categories...'
         for c in session.query(Category).filter(Category.parent == None):
             for item in list_categories(c):
                 print '   ', item
+
+        link_oils_to_categories(session)
 
 
 def purge_old_records(session):
@@ -218,7 +221,7 @@ def add_toxicity_lethal_concentrations(oil, row_dict):
 def clear_categories(session):
     transaction.begin()
 
-    categories = session.query(Category)
+    categories = session.query(Category).filter(Category.parent == None)
 
     rowcount = 0
     for o in categories:
@@ -265,6 +268,14 @@ def list_categories(category, indent=0):
     for c in category.children:
         for y in list_categories(c, indent + 4):
             yield y
+
+
+def link_oils_to_categories(session):
+    # now we try to link the oil records with our categories
+    # in some kind of automated fashion
+    for c in session.query(Category).filter(Category.children == None):
+        print 'leaf category:', c
+    pass
 
 
 def main(argv=sys.argv, proc=load_database):
