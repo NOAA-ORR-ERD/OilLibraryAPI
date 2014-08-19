@@ -19,13 +19,14 @@ from oil_library.models import (DBSession,
                                 KVis,
                                 DVis,
                                 Cut,
-                                Toxicity)
+                                Toxicity,
+                                Category)
 
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
-    print('usage: %s <config_uri> [var=value]\n'
-          '(example: "%s development.ini")' % (cmd, cmd))
+    print('usage: {0} <config_uri> [var=value]\n'
+          '(example: "{0} development.ini")'.format(cmd))
     sys.exit(1)
 
 
@@ -41,7 +42,7 @@ def load_database(settings):
         session = DBSession()
 
         # 1. purge our builtin rows if any exist
-        sys.stderr.write('Purging old records in database')
+        sys.stderr.write('Purging old Oil records in database')
         num_purged = purge_old_records(session)
         print 'finished!!!  %d rows processed.' % (num_purged)
 
@@ -51,7 +52,7 @@ def load_database(settings):
         print 'file version:', fd.__version__
 
         # 3. iterate over our rows
-        sys.stderr.write('Adding new records to database')
+        sys.stderr.write('Adding new Oil records to database')
         rowcount = 0
         for r in fd.readlines():
             if len(r) < 10:
@@ -66,6 +67,19 @@ def load_database(settings):
             rowcount += 1
 
         print 'finished!!!  %d rows processed.' % (rowcount)
+
+        print '\nPurging Categories...'
+        num_purged = clear_categories(session)
+        print '{0} categories purged.'.format(num_purged)
+
+        print 'Loading Categories...'
+        load_categories(session)
+        print 'Finished!!!'
+
+        print 'Here are our categories...'
+        for c in session.query(Category).filter(Category.parent == None):
+            for item in list_categories(c):
+                print '   ', item
 
 
 def purge_old_records(session):
@@ -201,162 +215,56 @@ def add_toxicity_lethal_concentrations(oil, row_dict):
             oil.toxicities.append(Toxicity(**toxargs))
 
 
-def audit_distillation_cuts(settings):
-    '''
-       Just a quick check of the data values that we loaded
-       when we initialized the database.
-    '''
-    with transaction.manager:
-        session = DBSession()
+def clear_categories(session):
+    transaction.begin()
 
-        sys.stderr.write('Auditing the records in database...')
-        num_cuts = []
-        liquid_temp = []
-        vapor_temp = []
-        fraction = []
-        for o in session.query(Oil):
-            num_cuts.append(len(o.cuts))
-            for i, cut in enumerate(o.cuts):
-                if len(liquid_temp) > i:
-                    if cut.liquid_temp:
-                        liquid_temp[i].append(cut.liquid_temp)
-                    if cut.vapor_temp:
-                        vapor_temp[i].append(cut.vapor_temp)
-                    if cut.fraction:
-                        fraction[i].append(cut.fraction)
-                else:
-                    liquid_temp.append([])
-                    vapor_temp.append([])
-                    fraction.append([])
+    categories = session.query(Category)
 
-        print ('\nNumber of cut entries (min, max, avg): ({0}, {1}, {2})'
-               .format(min(num_cuts),
-                       max(num_cuts),
-                       float(sum(num_cuts)) / len(num_cuts))
-               )
+    rowcount = 0
+    for o in categories:
+        session.delete(o)
+        rowcount += 1
 
-        print '\nLiquid Temperature:'
-        for i in range(len(liquid_temp)):
-            if len(liquid_temp[i]) > 0:
-                temp = liquid_temp[i]
-                avg = float(sum(temp)) / len(temp)
-                print ('\tCut #{0} (set-size, min, max, avg): '
-                       '({1}, {2}, {3}, {4})'
-                       .format(i, len(temp), min(temp), max(temp), avg))
-            else:
-                temp = liquid_temp[i]
-                print ('\tCut #{0} (set-size, min, max, avg): '
-                       '({1}, {2}, {3}, {4})'
-                       .format(i, len(temp), None, None, None))
-
-        print '\nVapor Temperature:'
-        for i in range(len(vapor_temp)):
-            print ('\tCut #{0} (set-size, min, max, avg): '
-                   '({1}, {2}, {3}, {4})'
-                   .format(i,
-                           len(vapor_temp[i]),
-                           min(vapor_temp[i]),
-                           max(vapor_temp[i]),
-                           float(sum(vapor_temp[i])) / len(vapor_temp[i]))
-                   )
-
-        print '\nFraction:'
-        for i in range(len(fraction)):
-            print ('\tCut #{0} (set-size, min, max, avg): '
-                   '({1}, {2}, {3}, {4})'
-                   .format(i,
-                           len(fraction[i]),
-                           min(fraction[i]),
-                           max(fraction[i]),
-                           float(sum(fraction[i])) / len(fraction[i]))
-                   )
-
-        print 'finished!!!'
+    transaction.commit()
+    return rowcount
 
 
-def audit_database(settings):
-    '''
-       Just a quick check of the data values that we loaded
-       when we initialized the database.
-    '''
-    with transaction.manager:
-        session = DBSession()
+def load_categories(session):
+    crude = Category('Crude')
+    refined = Category('Refined Products')
+    other = Category('Other')
 
-        sys.stderr.write('Auditing the records in database...')
-        for o in session.query(Oil):
-            if 1 and o.synonyms:
-                    print
-                    print [s.name for s in o.synonyms]
+    crude.append('Condensate')
+    crude.append('Light')
+    crude.append('Medium')
+    crude.append('Heavy')
 
-            if 1 and o.densities:
-                    print
-                    print [d.kg_per_m_cubed for d in o.densities]
-                    print [d.ref_temp for d in o.densities]
-                    print [d.weathering for d in o.densities]
+    refined.append('Diesel')
+    refined.append('Gasoline')
+    refined.append('Distillates')
+    refined.append('Light Products (Fuel Oil 1)')
+    refined.append('Fuel Oil 2')
+    refined.append('Fuel Oil 4 (IFO)')
+    refined.append('Fuel Oil 5')
+    refined.append('Fuel Oil 6 (HFO)')
+    refined.append('Group V')
+    refined.append('Asphalts')
+    refined.append('Dilbit')
 
-            if 1 and o.kvis:
-                    print
-                    print [k.meters_squared_per_sec for k in o.kvis]
-                    print [k.ref_temp for k in o.kvis]
-                    print [k.weathering for k in o.kvis]
+    other.append('Vegetable Oils/Biodiesel')
+    other.append('Dilbit')
+    other.append('Bitumen')
 
-            if 1 and o.dvis:
-                    print
-                    print [d.kg_per_msec for d in o.dvis]
-                    print [d.ref_temp for d in o.dvis]
-                    print [d.weathering for d in o.dvis]
-
-            if 1 and o.cuts:
-                    print
-                    print [c.vapor_temp for c in o.cuts]
-                    print [c.liquid_temp for c in o.cuts]
-                    print [c.fraction for c in o.cuts]
-
-            if 1:
-                tox = [t for t in o.toxicities if t.tox_type == 'EC']
-                if tox:
-                    print
-                    print [t.species for t in tox]
-                    print [t.after_24_hours for t in tox]
-                    print [t.after_48_hours for t in tox]
-                    print [t.after_96_hours for t in tox]
-
-            if 1:
-                tox = [t for t in o.toxicities if t.tox_type == 'LC']
-                if tox:
-                    print
-                    print [t.species for t in tox]
-                    print [t.after_24_hours for t in tox]
-                    print [t.after_48_hours for t in tox]
-                    print [t.after_96_hours for t in tox]
-
-        print 'finished!!!'
+    transaction.begin()
+    session.add_all([crude, refined, other])
+    transaction.commit()
 
 
-def export_database(settings):
-    '''
-       Just a quick check of the data values that we loaded
-       when we initialized the database.
-    '''
-    with transaction.manager:
-        session = DBSession()
-
-        sys.stderr.write('Exporting the records in database...')
-        for o in session.query(Oil):
-            print o
-            print o.tojson()
-
-
-def export(argv=sys.argv):
-    main(argv, export_database)
-
-
-def audit_cuts(argv=sys.argv):
-    main(argv, audit_distillation_cuts)
-
-
-def audit(argv=sys.argv):
-    main(argv, audit_database)
+def list_categories(category, indent=0):
+    yield '{0}{1}'.format(' ' * indent, category.name)
+    for c in category.children:
+        for y in list_categories(c, indent + 4):
+            yield y
 
 
 def main(argv=sys.argv, proc=load_database):

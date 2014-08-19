@@ -12,7 +12,10 @@ with open(os.path.join(here, 'README.rst')) as f:
 requires = ['cornice',
             'waitress',
             'WebTest',
-            'webhelpers2>=2.0b5']
+            'webhelpers2>=2.0b5',
+            'pyramid_debugtoolbar',
+            'pyramid_tm',
+            'PasteScript']
 
 
 setup(name='oil_library_api',
@@ -36,9 +39,9 @@ setup(name='oil_library_api',
                     '  main = oil_library_api:main\n'
                     '[console_scripts]\n'
                     '  init_oil_library = oil_library_api.scripts.initdb:main\n'
-                    '  export_oil_library = oil_library_api.scripts.initdb:export\n'
-                    '  audit_oil_library = oil_library_api.scripts.initdb:audit\n'
-                    '  audit_oil_cuts = oil_library_api.scripts.initdb:audit_cuts\n'
+                    '  export_oil_library = oil_library_api.scripts.reports:export\n'
+                    '  audit_oil_library = oil_library_api.scripts.reports:audit\n'
+                    '  audit_oil_cuts = oil_library_api.scripts.reports:audit_cuts\n'
                     ),
       paster_plugins=['pyramid'],
 )
