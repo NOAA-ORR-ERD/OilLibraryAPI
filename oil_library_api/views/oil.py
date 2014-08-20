@@ -26,7 +26,8 @@ def get_oils(request):
                  'location': o.location,
                  'field_name': o.field_name,
                  'product_type': o.product_type,
-                 'oil_class': o.oil_class}
+                 'oil_class': o.oil_class,
+                 'categories': get_category_paths(o)}
                 for o in oils]
     else:
         try:
@@ -35,3 +36,25 @@ def get_oils(request):
             return oil.tojson()
         except NoResultFound:
             raise HTTPNotFound()
+
+
+def get_category_paths(oil, sep='-'):
+    return [sep.join([c.name for c in get_category_ancestors(cat)])
+            for cat in oil.categories]
+
+
+def get_category_ancestors(category):
+    '''
+        Here we take a category, which is assumed to be a node
+        in a tree structure, and determine the parents of the category
+        all the way up to the apex.
+    '''
+    cat_list = []
+    cat_list.append(category)
+
+    while category.parent != None:
+        cat_list.append(category.parent)
+        category = category.parent
+
+    cat_list.reverse()
+    return cat_list
