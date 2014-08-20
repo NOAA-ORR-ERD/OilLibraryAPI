@@ -22,6 +22,11 @@ from oil_library.models import (DBSession,
                                 Toxicity,
                                 Category)
 
+from .init_categories import (clear_categories,
+                              load_categories,
+                              list_categories,
+                              link_oils_to_categories)
+
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
@@ -103,7 +108,6 @@ def purge_old_records(session):
 
 def add_oil_object(session, file_columns, row_data):
     row_dict = dict(zip(file_columns, row_data))
-    transaction.begin()
     oil = Oil(**row_dict)
 
     add_synonyms(session, oil, row_dict)
@@ -216,66 +220,6 @@ def add_toxicity_lethal_concentrations(oil, row_dict):
                 toxargs[arg] = row_dict.get(col)
 
             oil.toxicities.append(Toxicity(**toxargs))
-
-
-def clear_categories(session):
-    transaction.begin()
-
-    categories = session.query(Category).filter(Category.parent == None)
-
-    rowcount = 0
-    for o in categories:
-        session.delete(o)
-        rowcount += 1
-
-    transaction.commit()
-    return rowcount
-
-
-def load_categories(session):
-    crude = Category('Crude')
-    refined = Category('Refined Products')
-    other = Category('Other')
-
-    crude.append('Condensate')
-    crude.append('Light')
-    crude.append('Medium')
-    crude.append('Heavy')
-
-    refined.append('Diesel')
-    refined.append('Gasoline')
-    refined.append('Distillates')
-    refined.append('Light Products (Fuel Oil 1)')
-    refined.append('Fuel Oil 2')
-    refined.append('Fuel Oil 4 (IFO)')
-    refined.append('Fuel Oil 5')
-    refined.append('Fuel Oil 6 (HFO)')
-    refined.append('Group V')
-    refined.append('Asphalts')
-    refined.append('Dilbit')
-
-    other.append('Vegetable Oils/Biodiesel')
-    other.append('Dilbit')
-    other.append('Bitumen')
-
-    transaction.begin()
-    session.add_all([crude, refined, other])
-    transaction.commit()
-
-
-def list_categories(category, indent=0):
-    yield '{0}{1}'.format(' ' * indent, category.name)
-    for c in category.children:
-        for y in list_categories(c, indent + 4):
-            yield y
-
-
-def link_oils_to_categories(session):
-    # now we try to link the oil records with our categories
-    # in some kind of automated fashion
-    for c in session.query(Category).filter(Category.children == None):
-        print 'leaf category:', c
-    pass
 
 
 def main(argv=sys.argv, proc=load_database):
