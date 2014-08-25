@@ -11,6 +11,11 @@
     categories.  For most of the oils we should be able to do this using
     generalized methods.  But there will very likely be some records
     we just have to link in a hard-coded way.
+
+    The selection criteria for assigning refined products to different
+    categories on the oil selection screen, depends upon the API (density)
+    and the viscosity at a given temperature, usually at 38 C(100F).
+    The criteria follows closely, but not identically, to the ASTM standards
 '''
 import transaction
 
@@ -76,6 +81,7 @@ def link_oils_to_categories(session):
     link_crude_light_oils(session)
     link_crude_medium_oils(session)
     link_crude_heavy_oils(session)
+    link_refined_fuel_oil_1(session)
 
 
 def link_crude_light_oils(session):
@@ -124,6 +130,42 @@ def link_crude_medium_oils(session):
 
 
 def link_crude_heavy_oils(session):
+    # our category
+    top_category = (session.query(Category)
+                    .filter(Category.name == 'Crude').one())
+    category = [c for c in top_category.children if c.name == 'Heavy'][0]
+
+    # our oils
+    oils = (session.query(Oil)
+            .filter(Oil.api <= 22.3)
+            .filter(Oil.product_type == 'Crude')
+            .all())
+
+    count = 0
+    for o in oils:
+        o.categories.append(category)
+        count += 1
+
+    print ('{0} oils added to {1} -> {2}.'
+           .format(count, top_category.name, category.name))
+    transaction.commit()
+
+
+def link_refined_fuel_oil_1(session):
+    '''
+       Category Name:
+       - Fuel oil #1/gasoline/kerosene
+       Sample Oils:
+       - gasoline
+       - kerosene
+       - JP-4
+       - avgas
+       Density Criteria:
+       - API³35
+       Kinematic Viscosity Criteria:
+       - v <= 2.5 cSt @ 38 degrees Celcius
+       - v0 = v_ref * exp()
+    '''
     # our category
     top_category = (session.query(Category)
                     .filter(Category.name == 'Crude').one())
