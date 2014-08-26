@@ -42,6 +42,7 @@ setup(name='oil_library_api',
                     '  export_oil_library = oil_library_api.scripts.reports:export\n'
                     '  audit_oil_library = oil_library_api.scripts.reports:audit\n'
                     '  audit_oil_cuts = oil_library_api.scripts.reports:audit_cuts\n'
+                    '  plot_oil_viscosity = oil_library_api.scripts.plot_oil_viscosity:main\n'
                     ),
       paster_plugins=['pyramid'],
 )

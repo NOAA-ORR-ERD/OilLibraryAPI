@@ -161,7 +161,7 @@ def link_refined_fuel_oil_1(session):
        - JP-4
        - avgas
        Density Criteria:
-       - API³35
+       - API >= 35
        Kinematic Viscosity Criteria:
        - v <= 2.5 cSt @ 38 degrees Celcius
        - v0 = v_ref * exp()
