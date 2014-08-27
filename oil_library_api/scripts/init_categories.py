@@ -36,7 +36,7 @@ def clear_categories(session):
 
 def load_categories(session):
     crude = Category('Crude')
-    refined = Category('Refined Products')
+    refined = Category('Refined')
     other = Category('Other')
 
     crude.append('Condensate')
