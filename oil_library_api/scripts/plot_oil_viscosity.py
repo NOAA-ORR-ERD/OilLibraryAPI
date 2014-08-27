@@ -4,6 +4,9 @@ import sys
 import os
 import transaction
 
+from pprint import PrettyPrinter
+pp = PrettyPrinter(indent=2)
+
 import numpy
 np = numpy
 
@@ -26,6 +29,7 @@ from pyramid.scripts.common import parse_vars
 from oil_library.models import (DBSession,
                                 Base,
                                 Oil)
+from oil_library.oil_props import OilProps
 
 
 def usage(argv):
@@ -61,11 +65,21 @@ def plot_oil_viscosities(settings):
 
         if oilobj:
             print 'Our oil object: %s' % (oilobj)
-            print 'Our unweathered viscosities (kg/m^3, Kdegrees):'
-            vis = [v for v in oilobj.viscosities if v.weathering <= 0.0]
+
+            oil_props = OilProps(oilobj)
+            print '\nOilProps:', oil_props
+            print oil_props.viscosity
+
+            print '\nOur Dynamic viscosities:'
+            print [v for v in oilobj.dvis]
+
+            print '\nOur unweathered viscosities (kg/m^3, Kdegrees):'
+            vis = [v for v in oil_props.viscosities if v.weathering <= 0.0]
+            print vis
             for i in [(v.meters_squared_per_sec, v.ref_temp, v.weathering)
                       for v in vis]:
                 print i
+
             x = np.array([v.ref_temp for v in vis]) - 273.15
             y = np.array([v.meters_squared_per_sec for v in vis])
             xmin = x.min()
