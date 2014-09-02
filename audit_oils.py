@@ -1,4 +1,9 @@
 
+from pprint import PrettyPrinter
+pp = PrettyPrinter(indent=2)
+
+import numpy
+
 import transaction
 
 from sqlalchemy import engine_from_config
@@ -10,39 +15,40 @@ from pyramid.paster import (get_appsettings,
 
 from oil_library_api.models import DBSession
 from oil_library.models import Base, Oil, Toxicity, Category
+from oil_library.oil_props import OilProps
 
 session = DBSession()
 
+for n in range(20, 31, 1):
+    print
+    adios_id = 'AD{:>05}'.format(n)
+    print adios_id
+    try:
+        oilobj = (session.query(Oil)
+                  .filter(Oil.adios_oil_id == adios_id)
+                  .one())
+    except:
+        print 'not found. continue...'
+        continue
 
-def purge_categories(session):
-    transaction.begin()
+    oil_props = OilProps(oilobj)
 
-    for o in session.query(Category):
-        session.delete(o)
+    print oil_props.viscosity
 
-    transaction.commit()
+oilobj = (session.query(Oil)
+          .filter(Oil.name == 'FUEL OIL NO.6')
+          .one())
 
+print oilobj
+oil_props = OilProps(oilobj)
 
-transaction.begin()
+pp.pprint(oil_props.viscosities)
+print 'pour point (min, max): ', (oil_props._r_oil.pour_point_min,
+                                  oil_props._r_oil.pour_point_max)
 
-crude = Category('Crude')
-refined = Category('Refined Products')
-other = Category('Other')
-
-session.add_all([crude, refined, other])
-transaction.commit()
-
-
-oil = session.query(Oil).filter(Oil.name == 'AUTOMOTIVE GASOLINE, EXXON')[0]
-oil.tojson()
-
-cut = oil.cuts[0]
-cut.tojson()
-
-for o in session.query(Oil):
-    if o.toxicities:
-        print
-        print [t.species for t in o.toxicities]
-        print [t.after_24_hours for t in o.toxicities]
-        print [t.after_48_hours for t in o.toxicities]
-        print [t.after_96_hours for t in o.toxicities]
+for t in numpy.linspace(275.0, 325.0, 12.0):
+    oil_props.temperature = t
+    print '{0} at {1}'.format(
+                              oil_props.viscosity,
+                              t
+                              )
