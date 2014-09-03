@@ -8,6 +8,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from ..common.views import cors_policy, obj_id_from_url
 from ..models import DBSession
 from oil_library.models import Oil
+from oil_library.oil_props import OilProps
 
 oil_api = Service(name='oil', path='/oil*obj_id',
                   description="List All Oils",  cors_policy=cors_policy)
@@ -20,13 +21,16 @@ def get_oils(request):
 
     if not obj_id:
         oils = DBSession.query(Oil)
-        return [{'name': o.name,
+        return [{
                  'adios_oil_id': o.adios_oil_id,
-                 'api': o.api,
+                 'name': o.name,
                  'location': o.location,
                  'field_name': o.field_name,
                  'product_type': o.product_type,
                  'oil_class': o.oil_class,
+                 'api': o.api,
+                 'pour_point': get_pour_point(o),
+                 'viscosity': get_viscosity(o),
                  'categories': get_category_paths(o)}
                 for o in oils]
     else:
@@ -58,3 +62,15 @@ def get_category_ancestors(category):
 
     cat_list.reverse()
     return cat_list
+
+
+def get_pour_point(oil):
+    return [oil.pour_point_min, oil.pour_point_max]
+
+
+def get_viscosity(oil):
+    if oil.api >= 0:
+        oil_props = OilProps(oil, temperature=273.15 + 38)
+        return oil_props.get_viscosity('cSt')
+    else:
+        return None

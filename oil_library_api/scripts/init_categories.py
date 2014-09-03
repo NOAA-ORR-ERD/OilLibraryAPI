@@ -22,6 +22,7 @@ import transaction
 from oil_library.models import Oil, Category
 from oil_library.oil_props import OilProps
 
+
 def clear_categories(session):
     categories = session.query(Category).filter(Category.parent == None)
 
@@ -334,5 +335,32 @@ def show_uncategorized_oils(session):
             .filter(Oil.categories == None)
             .all())
 
+    fd = open('temp.txt', 'w')
+    fd.write('adios_oil_id\t'
+             'product_type\t'
+             'api\t'
+             'viscosity\t'
+             'pour_point\t'
+             'name\n')
     print ('{0} oils uncategorized.'
            .format(len(oils)))
+    for o in oils:
+        if o.api >= 0:
+            if o.api < 15:
+                category_temp = 273.15 + 50
+            else:
+                category_temp = 273.15 + 38
+            oil_props = OilProps(o, temperature=category_temp)
+            visc = oil_props.get_viscosity('cSt')
+        else:
+            visc = None
+
+        print 'writing to file temp.txt...'
+        fd.write('{0.adios_oil_id}\t'
+                 '{0.product_type}\t'
+                 '{0.api}\t'
+                 '{1}\t'
+                 '({0.pour_point_min}, {0.pour_point_max})\t'
+                 '{0.name}\n'
+                 .format(o, visc)
+                 )
