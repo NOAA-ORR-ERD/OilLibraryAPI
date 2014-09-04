@@ -100,11 +100,7 @@ def link_crude_light_oils(session):
                     .filter(Category.name == 'Crude').one())
     category = [c for c in top_category.children if c.name == 'Light'][0]
 
-    # our oils
-    oils = (session.query(Oil)
-            .filter(Oil.api > 31.1)
-            .filter(Oil.product_type == 'Crude')
-            .all())
+    oils = get_oils_by_api(session, 'Crude', api_min=31.1)
 
     count = 0
     for o in oils:
@@ -122,12 +118,8 @@ def link_crude_medium_oils(session):
                     .filter(Category.name == 'Crude').one())
     category = [c for c in top_category.children if c.name == 'Medium'][0]
 
-    # our oils
-    oils = (session.query(Oil)
-            .filter(Oil.api <= 31.1)
-            .filter(Oil.api > 22.3)
-            .filter(Oil.product_type == 'Crude')
-            .all())
+    oils = get_oils_by_api(session, 'Crude',
+                           api_min=22.3, api_max=31.1)
 
     count = 0
     for o in oils:
@@ -145,11 +137,7 @@ def link_crude_heavy_oils(session):
                     .filter(Category.name == 'Crude').one())
     category = [c for c in top_category.children if c.name == 'Heavy'][0]
 
-    # our oils
-    oils = (session.query(Oil)
-            .filter(Oil.api <= 22.3)
-            .filter(Oil.product_type == 'Crude')
-            .all())
+    oils = get_oils_by_api(session, 'Crude', api_max=22.3)
 
     count = 0
     for o in oils:
@@ -183,10 +171,7 @@ def link_refined_fuel_oil_1(session):
                                 'Kerosene')
                   ]
 
-    oils = (session.query(Oil)
-            .filter(Oil.api >= 35.0)
-            .filter(Oil.product_type == 'Refined')
-            .all())
+    oils = get_oils_by_api(session, 'Refined', api_min=35.0)
 
     count = 0
     category_temp = 273.15 + 38
@@ -224,11 +209,8 @@ def link_refined_fuel_oil_2(session):
                                 'Heating Oil')
                   ]
 
-    oils = (session.query(Oil)
-            .filter(Oil.api >= 30.0)
-            .filter(Oil.api < 35.0)
-            .filter(Oil.product_type == 'Refined')
-            .all())
+    oils = get_oils_by_api(session, 'Refined',
+                           api_min=30.0, api_max=35.0)
 
     count = 0
     category_temp = 273.15 + 38
@@ -265,11 +247,8 @@ def link_refined_ifo(session):
                   if c.name in ('Intermediate Fuel Oil',)
                   ]
 
-    oils = (session.query(Oil)
-            .filter(Oil.api >= 15.0)
-            .filter(Oil.api < 30.0)
-            .filter(Oil.product_type == 'Refined')
-            .all())
+    oils = get_oils_by_api(session, 'Refined',
+                           api_min=15.0, api_max=30.0)
 
     count = 0
     category_temp = 273.15 + 38
@@ -308,11 +287,8 @@ def link_refined_fuel_oil_6(session):
                                 'Group 5')
                   ]
 
-    oils = (session.query(Oil)
-            .filter(Oil.api >= 0.0)
-            .filter(Oil.api < 15.0)
-            .filter(Oil.product_type == 'Refined')
-            .all())
+    oils = get_oils_by_api(session, 'Refined',
+                           api_min=0.0, api_max=15.0)
 
     count = 0
     category_temp = 273.15 + 50
@@ -355,12 +331,45 @@ def show_uncategorized_oils(session):
         else:
             visc = None
 
-        print 'writing to file temp.txt...'
         fd.write('{0.adios_oil_id}\t'
                  '{0.product_type}\t'
                  '{0.api}\t'
                  '{1}\t'
                  '({0.pour_point_min}, {0.pour_point_max})\t'
                  '{0.name}\n'
-                 .format(o, visc)
+                 .format(o, visc))
+
+
+def get_oils_by_api(session, product_type,
+                    api_min=None, api_max=None):
+    '''
+        Our oils may or may not have a valid api.
+        If the oil has a valid api:
+            Use the associated api value
+        Else:
+            Compute the api from the reference densities at 15 degrees Celcius
+            (per API)
+    '''
+    oil_query = session.query(Oil).filter(Oil.product_type == product_type)
+
+    if api_max != None:
+        oil_query = oil_query.filter(Oil.api <= api_max)
+
+    if api_min != None:
+        oil_query = oil_query.filter(Oil.api > api_min)
+
+    oils = oil_query.all()
+
+    oil_query = (session.query(Oil)
+                 .filter(Oil.product_type == product_type)
+                 .filter(Oil.api == None)
                  )
+    for o in oil_query:
+        category_temp = 273.15 + 15
+        oil_props = OilProps(o, temperature=category_temp)
+        api = (141.5 * 1000 / oil_props.density) - 131.5
+        if ((api_max != None and api <= api_max) or
+            (api_min != None and api > api_min)):
+            oils.append(o)
+
+    return oils

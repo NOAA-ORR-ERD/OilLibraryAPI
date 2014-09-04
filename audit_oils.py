@@ -1,4 +1,6 @@
-
+'''
+    This is just a scratchpad script I use inside ipython
+'''
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=2)
 
