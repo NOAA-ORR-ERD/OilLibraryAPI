@@ -60,10 +60,6 @@ def load_categories(session):
     refined.append('Heavy Fuel Oil')
     refined.append('Group 5')
 
-    other.append('Vegetable Oils/Biodiesel')
-    other.append('Dilbit')
-    other.append('Bitumen')
-
     session.add_all([crude, refined, other])
     transaction.commit()
 
@@ -91,12 +87,15 @@ def link_oils_to_categories(session):
     link_refined_ifo(session)
     link_refined_fuel_oil_6(session)
 
+    link_all_other_oils(session)
+
     show_uncategorized_oils(session)
 
 
 def link_crude_light_oils(session):
     # our category
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Crude').one())
     category = [c for c in top_category.children if c.name == 'Light'][0]
 
@@ -115,6 +114,7 @@ def link_crude_light_oils(session):
 def link_crude_medium_oils(session):
     # our category
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Crude').one())
     category = [c for c in top_category.children if c.name == 'Medium'][0]
 
@@ -134,6 +134,7 @@ def link_crude_medium_oils(session):
 def link_crude_heavy_oils(session):
     # our category
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Crude').one())
     category = [c for c in top_category.children if c.name == 'Heavy'][0]
 
@@ -164,6 +165,7 @@ def link_refined_fuel_oil_1(session):
        - v <= 2.5 cSt @ 38 degrees Celcius
     '''
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Refined').one())
     categories = [c for c in top_category.children
                   if c.name in ('Light Products (Fuel Oil 1)',
@@ -202,6 +204,7 @@ def link_refined_fuel_oil_2(session):
        - 2.5 < v <= 4.0 cSt @ 38 degrees Celcius
     '''
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Refined').one())
     categories = [c for c in top_category.children
                   if c.name in ('Fuel Oil 2',
@@ -242,6 +245,7 @@ def link_refined_ifo(session):
        - 4.0 < v < 200.0 cSt @ 38 degrees Celcius
     '''
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Refined').one())
     categories = [c for c in top_category.children
                   if c.name in ('Intermediate Fuel Oil',)
@@ -279,6 +283,7 @@ def link_refined_fuel_oil_6(session):
        - 200.0 <= v cSt @ 50 degrees Celcius
     '''
     top_category = (session.query(Category)
+                    .filter(Category.parent == None)
                     .filter(Category.name == 'Refined').one())
     categories = [c for c in top_category.children
                   if c.name in ('Fuel Oil 6',
@@ -303,6 +308,37 @@ def link_refined_fuel_oil_6(session):
     print ('{0} oils added to {1} -> {2}.'
            .format(count, top_category.name,
                    [n.name for n in categories]))
+    transaction.commit()
+
+
+def link_all_other_oils(session):
+    '''
+        Category Name:
+        - Other
+        Sample Oils:
+        - Catalytic Cracked Slurry Oil
+        - Fluid Catalytic Cracker Medium Cycle Oil
+        Criteria:
+        - Any oils that fell outside all the other Category Criteria
+    '''
+    top_category = (session.query(Category)
+                    .filter(Category.parent == None)
+                    .filter(Category.name == 'Other')
+                    .one())
+    categories = [top_category]
+
+    oils = (session.query(Oil)
+            .filter(Oil.categories == None)
+            .all())
+
+    count = 0
+    for o in oils:
+        for category in categories:
+            o.categories.append(category)
+        count += 1
+
+    print ('{0} oils added to {1}.'
+           .format(count, [n.name for n in categories]))
     transaction.commit()
 
 
