@@ -16,14 +16,15 @@ oil_api = Service(name='oil', path='/oil*obj_id',
 
 @oil_api.get()
 def get_oils(request):
-    '''Returns all oils in JSON format'''
     obj_id = obj_id_from_url(request)
 
     if not obj_id:
+        # Return all oils in JSON format.  We only return the searchable
+        # columns.
         oils = DBSession.query(Oil)
         return [{
                  'adios_oil_id': o.adios_oil_id,
-                 'name': o.name,
+                 'name': o.oil_name,
                  'location': o.location,
                  'field_name': o.field_name,
                  'product_type': o.product_type,
@@ -65,7 +66,7 @@ def get_category_ancestors(category):
 
 
 def get_pour_point(oil):
-    return [oil.pour_point_min, oil.pour_point_max]
+    return [oil.pour_point_min_k, oil.pour_point_max_k]
 
 
 def get_viscosity(oil):
