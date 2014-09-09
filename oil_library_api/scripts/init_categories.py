@@ -60,6 +60,8 @@ def load_categories(session):
     refined.append('Heavy Fuel Oil')
     refined.append('Group 5')
 
+    other.append('Other')
+
     session.add_all([crude, refined, other])
     transaction.commit()
 
@@ -325,7 +327,9 @@ def link_all_other_oils(session):
                     .filter(Category.parent == None)
                     .filter(Category.name == 'Other')
                     .one())
-    categories = [top_category]
+    categories = [c for c in top_category.children
+                  if c.name in ('Other',)
+                  ]
 
     oils = (session.query(Oil)
             .filter(Oil.categories == None)
