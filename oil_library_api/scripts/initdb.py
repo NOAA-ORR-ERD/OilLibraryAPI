@@ -23,10 +23,8 @@ from oil_library.models import (DBSession,
                                 Toxicity,
                                 Category)
 
-from .init_categories import (clear_categories,
-                              load_categories,
-                              list_categories,
-                              link_oils_to_categories)
+from .init_categories import process_categories
+from .init_estimates import process_estimates
 
 
 def usage(argv):
@@ -74,21 +72,8 @@ def load_database(settings):
 
         print 'finished!!!  %d rows processed.' % (rowcount)
 
-        print '\nPurging Categories...'
-        num_purged = clear_categories(session)
-        print '{0} categories purged.'.format(num_purged)
-        print 'Orphaned categories:', session.query(Category).all()
-
-        print 'Loading Categories...'
-        load_categories(session)
-        print 'Finished!!!'
-
-        print 'Here are our newly built categories...'
-        for c in session.query(Category).filter(Category.parent == None):
-            for item in list_categories(c):
-                print '   ', item
-
-        link_oils_to_categories(session)
+        process_categories(session)
+        process_estimates(session)
 
 
 def purge_old_records(session):

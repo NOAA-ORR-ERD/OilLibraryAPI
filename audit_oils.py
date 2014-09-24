@@ -16,41 +16,18 @@ from pyramid.paster import (get_appsettings,
                             setup_logging)
 
 from oil_library_api.models import DBSession
-from oil_library.models import Base, Oil, Toxicity, Category
+from oil_library.models import (Base, Oil, Toxicity, Category, Estimated)
 from oil_library.oil_props import OilProps
+
+config_uri = 'development.ini'
+settings = get_appsettings(config_uri,
+                           name='oil_library_api')
+engine = engine_from_config(settings, 'sqlalchemy.')
+DBSession.configure(bind=engine)
+Base.metadata.create_all(engine)
 
 session = DBSession()
 
-for n in range(20, 31, 1):
-    print
-    adios_id = 'AD{:>05}'.format(n)
-    print adios_id
-    try:
-        oilobj = (session.query(Oil)
-                  .filter(Oil.adios_oil_id == adios_id)
-                  .one())
-    except:
-        print 'not found. continue...'
-        continue
-
-    oil_props = OilProps(oilobj)
-
-    print oil_props.viscosity
-
-oilobj = (session.query(Oil)
-          .filter(Oil.name == 'FUEL OIL NO.6')
-          .one())
-
-print oilobj
-oil_props = OilProps(oilobj)
-
-pp.pprint(oil_props.viscosities)
-print 'pour point (min, max): ', (oil_props._r_oil.pour_point_min,
-                                  oil_props._r_oil.pour_point_max)
-
-for t in numpy.linspace(275.0, 325.0, 12.0):
-    oil_props.temperature = t
-    print '{0} at {1}'.format(
-                              oil_props.viscosity,
-                              t
-                              )
+oil_obj = session.query(Oil).filter(Oil.adios_oil_id == 'AD00084').one()
+oil_props = OilProps(oil_obj, 273.15 + 38)
+print oil_props.viscosities

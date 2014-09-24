@@ -23,6 +23,25 @@ from oil_library.models import Oil, Category
 from oil_library.oil_props import OilProps
 
 
+def process_categories(session):
+    print '\nPurging Categories...'
+    num_purged = clear_categories(session)
+
+    print '{0} categories purged.'.format(num_purged)
+    print 'Orphaned categories:', session.query(Category).all()
+
+    print 'Loading Categories...'
+    load_categories(session)
+    print 'Finished!!!'
+
+    print 'Here are our newly built categories...'
+    for c in session.query(Category).filter(Category.parent == None):
+        for item in list_categories(c):
+            print '   ', item
+
+    link_oils_to_categories(session)
+
+
 def clear_categories(session):
     categories = session.query(Category).filter(Category.parent == None)
 
