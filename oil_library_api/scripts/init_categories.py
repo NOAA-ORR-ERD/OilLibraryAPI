@@ -19,7 +19,7 @@
 '''
 import transaction
 
-from oil_library.models import Oil, Category
+from oil_library.models import ImportedRecord, Category
 from oil_library.oil_props import OilProps
 
 
@@ -350,8 +350,8 @@ def link_all_other_oils(session):
                   if c.name in ('Other',)
                   ]
 
-    oils = (session.query(Oil)
-            .filter(Oil.categories == None)
+    oils = (session.query(ImportedRecord)
+            .filter(ImportedRecord.categories == None)
             .all())
 
     count = 0
@@ -366,8 +366,8 @@ def link_all_other_oils(session):
 
 
 def show_uncategorized_oils(session):
-    oils = (session.query(Oil)
-            .filter(Oil.categories == None)
+    oils = (session.query(ImportedRecord)
+            .filter(ImportedRecord.categories == None)
             .all())
 
     fd = open('temp.txt', 'w')
@@ -409,19 +409,20 @@ def get_oils_by_api(session, product_type,
             Compute the api from the reference densities at 15 degrees Celcius
             (per API)
     '''
-    oil_query = session.query(Oil).filter(Oil.product_type == product_type)
+    oil_query = (session.query(ImportedRecord)
+                 .filter(ImportedRecord.product_type == product_type))
 
     if api_max != None:
-        oil_query = oil_query.filter(Oil.api <= api_max)
+        oil_query = oil_query.filter(ImportedRecord.api <= api_max)
 
     if api_min != None:
-        oil_query = oil_query.filter(Oil.api > api_min)
+        oil_query = oil_query.filter(ImportedRecord.api > api_min)
 
     oils = oil_query.all()
 
-    oil_query = (session.query(Oil)
-                 .filter(Oil.product_type == product_type)
-                 .filter(Oil.api == None)
+    oil_query = (session.query(ImportedRecord)
+                 .filter(ImportedRecord.product_type == product_type)
+                 .filter(ImportedRecord.api == None)
                  )
     for o in oil_query:
         category_temp = 273.15 + 15
