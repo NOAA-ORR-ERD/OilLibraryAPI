@@ -29,7 +29,11 @@ Base.metadata.create_all(engine)
 
 session = DBSession()
 
-oil_obj = (session.query(Oil).join(ImportedRecord)
-           .filter(ImportedRecord.adios_oil_id == 'AD00084').one())
+oil_objs = (session.query(Oil).join(ImportedRecord)
+           .filter(ImportedRecord.kvis != None)
+           .filter(ImportedRecord.dvis != None)
+           )
+oil_obj = oil_objs[0]
+
 oil_props = OilProps(oil_obj.imported_record, 273.15 + 38)
 print oil_props.viscosities
