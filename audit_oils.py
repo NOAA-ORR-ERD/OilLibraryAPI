@@ -17,7 +17,7 @@ from pyramid.paster import (get_appsettings,
 
 from oil_library_api.models import DBSession
 from oil_library.models import (Base, ImportedRecord, Oil,
-                                Toxicity, Category)
+                                Density, Toxicity, Category)
 from oil_library.oil_props import OilProps
 
 config_uri = 'development.ini'
@@ -35,5 +35,5 @@ oil_objs = (session.query(Oil).join(ImportedRecord)
            )
 oil_obj = oil_objs[0]
 
-oil_props = OilProps(oil_obj.imported_record, 273.15 + 38)
+oil_props = OilProps(oil_obj.imported, 273.15 + 38)
 print oil_props.viscosities

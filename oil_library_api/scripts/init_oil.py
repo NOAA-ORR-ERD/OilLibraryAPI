@@ -8,7 +8,7 @@
 '''
 import transaction
 
-from oil_library.models import ImportedRecord, Oil, KVis
+from oil_library.models import ImportedRecord, Oil, KVis, Density
 
 
 def process_oils(session):
@@ -33,8 +33,6 @@ def add_densities(imported_rec, oil):
         - If no density value exists, estimate it from the API.
           So at the end, we will always have at least one density at
           15 degrees Celsius.
-        - This is not in the document, but Bill & Chris have verbally stated
-          they would like there to always be a 15C density value.
         - If a density measurement at some temperature exists, but no API,
           then we estimate API from density.
           So at the end, we will always have an API value.
@@ -42,8 +40,54 @@ def add_densities(imported_rec, oil):
           and ensured that they are consistent.  But if a record contains both
           an API and a number of densities, these values may conflict.
           In this case, we will reject the creation of the oil record.
+        - TODO: This is not in the document, but Bill & Chris have verbally
+          stated they would like there to always be a 15C density value.
     '''
-    pass
+    if len(imported_rec.densities) == 0 and imported_rec.api is not None:
+        # estimate our density from api
+        print 'estimate density from api'
+        kg_m_3, ref_temp_k = estimate_density_from_api(imported_rec.api)
+
+        oil.densities.append(Density(kg_m_3=kg_m_3,
+                                     ref_temp_k=ref_temp_k,
+                                     weathering=0.0))
+        oil.api = imported_rec.api
+    elif imported_rec.api is None:
+        # estimate our api from density
+        print 'estimate our api from density'
+        d_0 = density_at_temperature(imported_rec, 273.15 + 15)
+
+        oil.api = (141.5 * 1000 / d_0) - 131.5
+        for d in imported_rec.densities:
+            oil.densities.append(d)
+    else:
+        # For now we will just accept both the api and densities
+        # TODO: check if these values conflict
+        print 'getting both values from imported record...'
+        oil.api = imported_rec.api
+
+        for d in imported_rec.densities:
+            oil.densities.append(d)
+        pass
+
+
+def estimate_density_from_api(api):
+    kg_m_3 = 141.5 / (131.5 + api) * 1000
+    ref_temp_k = 273.15 + 15
+
+    return kg_m_3, ref_temp_k
+
+
+def density_at_temperature(oil_rec, temperature):
+    # first, get the density record closest to our temperature
+    density_rec = sorted([(d, abs(d.ref_temp_k - temperature))
+                          for d in oil_rec.densities],
+                         key=lambda d: d[1])[0][0]
+    d_ref = density_rec.kg_m_3
+    t_ref = density_rec.ref_temp_k
+    k_pt = 0.008
+
+    return d_ref / (1 - k_pt * (t_ref - temperature))
 
 
 def add_viscosities(imported_rec, oil):
@@ -76,12 +120,12 @@ def add_viscosities(imported_rec, oil):
 
 
 def get_kvis(oil_rec):
-    if oil_rec.kvis != None:
+    if oil_rec.kvis is not None:
         viscosities = [(k.m_2_s,
                         k.ref_temp_k,
-                        (0.0 if k.weathering == None else k.weathering))
+                        (0.0 if k.weathering is None else k.weathering))
                        for k in oil_rec.kvis
-                       if k.ref_temp_k != None]
+                       if k.ref_temp_k is not None]
     else:
         viscosities = []
 
@@ -104,12 +148,12 @@ def get_kvis_from_dvis(oil_rec):
     if oil_rec.dvis:
         densities = [(d.kg_m_3,
                       d.ref_temp_k,
-                      (0.0 if d.weathering == None else d.weathering))
+                      (0.0 if d.weathering is None else d.weathering))
                      for d in oil_rec.densities]
 
         for v, t, w in [(d.kg_ms,
                          d.ref_temp_k,
-                         (0.0 if d.weathering == None else d.weathering))
+                         (0.0 if d.weathering is None else d.weathering))
                         for d in oil_rec.dvis]:
             matches_weathering = [(d[0], abs(t - d[1]))
                                   for d in densities
