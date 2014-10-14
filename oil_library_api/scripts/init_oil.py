@@ -24,13 +24,21 @@ def process_oils(session):
 def add_oil(record):
     print 'Estimations for {0}'.format(record.adios_oil_id)
     oil = Oil()
+
+    add_demographics(record, oil)
     add_densities(record, oil)
     add_viscosities(record, oil)
     add_oil_water_interfacial_tension(record, oil)
     # TODO: should we add oil/seawater tension as well???
     add_pour_point(record, oil)
     add_flash_point(record, oil)
+    add_emulsion_water_fraction_max(record, oil)
+
     record.oil = oil
+
+
+def add_demographics(imported_rec, oil):
+    oil.name = imported_rec.oil_name
 
 
 def add_densities(imported_rec, oil):
@@ -51,6 +59,7 @@ def add_densities(imported_rec, oil):
     '''
     if len(imported_rec.densities) == 0 and imported_rec.api is not None:
         # estimate our density from api
+        print 'estimate our density from api...'
         kg_m_3, ref_temp_k = estimate_density_from_api(imported_rec.api)
 
         oil.densities.append(Density(kg_m_3=kg_m_3,
@@ -274,11 +283,42 @@ def add_flash_point(imported_rec, oil):
         oil.flash_point_max_k = imported_rec.flash_point_max_k
     else:
         oil.flash_point_min_k = None
-        if 0:
+        if len(imported_rec.cuts) > 0:
             # if we have measured distillation cuts, then we use method 'A'
-            # oil.flash_point_max_k = estimate_fp_by_cut(imported_rec)
-            pass
+            oil.flash_point_max_k = estimate_fp_by_cut(imported_rec)
         else:
             # we use method 'B'
-            # oil.flash_point_max_k = estimate_fp_by_api(imported_rec)
-            pass
+            oil.flash_point_max_k = estimate_fp_by_api(oil)
+
+
+def estimate_fp_by_cut(imported_rec):
+    '''
+        If we have measured distillation cut data:
+            (A) T_cut1 = the boiling point of the first pseudo-component cut.
+                T_flsh = 117 + 0.69 * T_cut1
+    '''
+    temp_cut_1 = sorted(imported_rec.cuts,
+                        key=lambda x: x.vapor_temp_k)[0].vapor_temp_k
+
+    return 117.0 + 0.69 * temp_cut_1
+
+
+def estimate_fp_by_api(imported_rec):
+    '''
+        If we do *not* have measured distillation cut data, then use api:
+            (B) T_flsh = 457 - 3.34 * api
+    '''
+    return 457.0 - 3.34 * imported_rec.api
+
+
+def add_emulsion_water_fraction_max(imported_rec, oil):
+    '''
+        This quantity will be set after the emulsification approach in ADIOS3
+        is finalized.  It will vary depending upon the emulsion stability.
+        For now set f_w_max = 0.9 for crude oils and f_w_max = 0.0 for
+        refined products.
+    '''
+    if imported_rec.product_type == 'Crude':
+        oil.emulsion_water_fraction_max = 0.9
+    elif imported_rec.product_type == 'Refined':
+        oil.emulsion_water_fraction_max = 0.0
