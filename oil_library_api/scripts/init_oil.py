@@ -33,6 +33,11 @@ def add_oil(record):
     add_pour_point(record, oil)
     add_flash_point(record, oil)
     add_emulsion_water_fraction_max(record, oil)
+    add_resin_fractions(oil)
+    add_asphaltene_fractions(oil)
+    add_bullwinkle_fractions(oil)
+    add_adhesion(oil)
+    add_sulphur_mass_fraction(oil)
 
     record.oil = oil
 
@@ -322,3 +327,89 @@ def add_emulsion_water_fraction_max(imported_rec, oil):
         oil.emulsion_water_fraction_max = 0.9
     elif imported_rec.product_type == 'Refined':
         oil.emulsion_water_fraction_max = 0.0
+
+
+def add_resin_fractions(oil):
+    for a, b, t in get_resin_coeffs(oil):
+        f_res = (0.033 * a +
+                 0.00087 * b -
+                 0.74)
+        f_res = 0.0 if f_res < 0.0 else f_res
+
+        # TODO: add it to our oil record
+        #oil.resin_fractions.append(ResinFraction(f_res, t))
+
+
+def add_asphaltene_fractions(oil):
+    for a, b, t in get_asphaltene_coeffs(oil):
+        f_asph = (0.000014 * a +
+                  0.000004 * b -
+                  0.18)
+        f_asph = 0.0 if f_asph < 0.0 else f_asph
+
+        # TODO: add it to our oil record
+        #oil.asphaltene_fractions.append(AsphalteneFraction(f_asph, t))
+
+
+def get_resin_coeffs(oil):
+    '''
+        Get coefficients for calculating resin (and asphaltene) fractions
+        based on Merv Fingas' empirical analysis of ESTC oil properties
+        database.
+        For now, we will assume we need to gather an array of coefficients
+        based on the existing measured viscosities and densities.
+        So we assume we are dealing with an oil object that has both.
+        We return ((a0, b0),
+                   (a1, b1),
+                   ...
+                   )
+    '''
+    a = [(10 * math.exp(0.001 *
+                        density_at_temperature(oil, k.ref_temp_k)))
+         for k in oil.kvis
+         if k.weathering == 0.0]
+    b = [(10 * math.log(1000.0 *
+                        density_at_temperature(oil, k.ref_temp_k) *
+                        k.kg_m_3))
+         for k in oil.kvis
+         if k.weathering == 0.0]
+    t = [k.ref_temp_k
+         for k in oil.kvis
+         if k.weathering == 0.0]
+    return zip(a, b, t)
+
+
+def get_asphaltene_coeffs(oil):
+    return get_resin_coeffs(oil)
+
+
+def add_bullwinkle_fractions(oil):
+    '''
+        This is the mass fraction that must evaporate of dissolve before
+        stable emulsification can begin.
+        For this estimation, we depend on an oil object with a valid
+        asphaltene fraction or a valid api
+    '''
+    f_bulls = [0.32 - 3.59 * af.fraction
+               for af in oil.asphaltene_fractions
+               if af > 0]
+
+    if not f_bulls:
+        f_bulls = 0.5762 * math.log10(oil.api)
+
+    # TODO: add it to our oil record
+    #oil.bullwinkle_fractions.append(BullwinkleFraction(f_bulls, t))
+
+
+def add_adhesion(oil):
+    '''
+        This is currently not used by the model.
+    '''
+    pass
+
+
+def add_sulphur_mass_fraction(oil):
+    '''
+        This is currently not used by the model.
+    '''
+    pass
