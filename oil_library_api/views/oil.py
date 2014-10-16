@@ -5,10 +5,12 @@ from pyramid.httpexceptions import HTTPNotFound
 
 from sqlalchemy.orm.exc import NoResultFound
 
+from hazpy import unit_conversion as uc
+
 from ..common.views import cors_policy, obj_id_from_url
 from ..models import DBSession
 from oil_library.models import Oil
-from oil_library.oil_props import OilProps
+from oil_library.utilities import get_viscosity
 
 oil_api = Service(name='oil', path='/oil*obj_id',
                   description="List All Oils",  cors_policy=cors_policy)
@@ -23,21 +25,21 @@ def get_oils(request):
         # columns.
         oils = DBSession.query(Oil)
         return [{
-                 'adios_oil_id': o.adios_oil_id,
-                 'name': o.oil_name,
-                 'location': o.location,
-                 'field_name': o.field_name,
-                 'product_type': o.product_type,
-                 'oil_class': o.oil_class,
+                 'adios_oil_id': o.imported.adios_oil_id,
+                 'name': o.name,
+                 'location': o.imported.location,
+                 'field_name': o.imported.field_name,
+                 'product_type': o.imported.product_type,
+                 'oil_class': o.imported.oil_class,
                  'api': o.api,
                  'pour_point': get_pour_point(o),
-                 'viscosity': get_viscosity(o),
+                 'viscosity': get_oil_viscosity(o),
                  'categories': get_category_paths(o)}
                 for o in oils]
     else:
         try:
             oil = (DBSession.query(Oil)
-                   .filter(Oil.adios_oil_id == obj_id).one())
+                   .filter(Oil.imported.adios_oil_id == obj_id).one())
             return oil.tojson()
         except NoResultFound:
             raise HTTPNotFound()
@@ -69,9 +71,11 @@ def get_pour_point(oil):
     return [oil.pour_point_min_k, oil.pour_point_max_k]
 
 
-def get_viscosity(oil):
-    if oil.api >= 0:
-        oil_props = OilProps(oil, temperature=273.15 + 38)
-        return oil_props.get_viscosity('cSt')
+def get_oil_viscosity(oil):
+    if oil.api >= 0 and len(oil.kvis) > 0:
+        print '\nget_viscosity({0.imported.adios_oil_id}) = {1}'.format(oil, get_viscosity(oil, 273.15 + 38))
+        print 'oil.kvis = ', oil.kvis
+        return uc.convert('Kinematic Viscosity', 'm^2/s', 'cSt',
+                          get_viscosity(oil, 273.15 + 38))
     else:
         return None

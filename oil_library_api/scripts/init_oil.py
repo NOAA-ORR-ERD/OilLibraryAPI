@@ -10,7 +10,7 @@ import math
 
 import transaction
 
-from oil_library.models import ImportedRecord, Oil, KVis, Density
+from oil_library.models import ImportedRecord, Oil, KVis, Density, SARAFraction
 
 
 def process_oils(session):
@@ -64,7 +64,6 @@ def add_densities(imported_rec, oil):
     '''
     if len(imported_rec.densities) == 0 and imported_rec.api is not None:
         # estimate our density from api
-        print 'estimate our density from api...'
         kg_m_3, ref_temp_k = estimate_density_from_api(imported_rec.api)
 
         oil.densities.append(Density(kg_m_3=kg_m_3,
@@ -111,9 +110,13 @@ def density_at_temperature(oil_rec, temperature, weathering=0.0):
             return None
         else:
             d_ref, t_ref = estimate_density_from_api(oil_rec.api)
-    k_pt = 0.008
 
-    # then interpolate our density based on temperature
+    k_pt = 0.008
+    if density_list and math.fabs(t_ref - temperature) > (1 / k_pt):
+        # even if we got some measured densities, they could be at
+        # temperatures that is out of range for our algorithm.
+        return None
+
     return d_ref / (1 - k_pt * (t_ref - temperature))
 
 
@@ -173,7 +176,8 @@ def get_kvis_from_dvis(oil_rec):
         for dv, t, w in [(d.kg_ms,
                          d.ref_temp_k,
                          (0.0 if d.weathering is None else d.weathering))
-                         for d in oil_rec.dvis]:
+                         for d in oil_rec.dvis
+                         if d.kg_ms > 0.0]:
             density = density_at_temperature(oil_rec, t, w)
 
             # kvis = dvis/density
@@ -336,8 +340,9 @@ def add_resin_fractions(oil):
                  0.74)
         f_res = 0.0 if f_res < 0.0 else f_res
 
-        # TODO: add it to our oil record
-        #oil.resin_fractions.append(ResinFraction(f_res, t))
+        oil.sara_fractions.append(SARAFraction(sara_type='Resins',
+                                               fraction=f_res,
+                                               ref_temp_k=t))
 
 
 def add_asphaltene_fractions(oil):
@@ -347,8 +352,9 @@ def add_asphaltene_fractions(oil):
                   0.18)
         f_asph = 0.0 if f_asph < 0.0 else f_asph
 
-        # TODO: add it to our oil record
-        #oil.asphaltene_fractions.append(AsphalteneFraction(f_asph, t))
+        oil.sara_fractions.append(SARAFraction(sara_type='Asphaltenes',
+                                               fraction=f_asph,
+                                               ref_temp_k=t))
 
 
 def get_resin_coeffs(oil):
@@ -364,15 +370,26 @@ def get_resin_coeffs(oil):
                    ...
                    )
     '''
-    a = [(10 * math.exp(0.001 *
-                        density_at_temperature(oil, k.ref_temp_k)))
-         for k in oil.kvis
-         if k.weathering == 0.0]
-    b = [(10 * math.log(1000.0 *
-                        density_at_temperature(oil, k.ref_temp_k) *
-                        k.kg_m_3))
-         for k in oil.kvis
-         if k.weathering == 0.0]
+    try:
+        a = [(10 * math.exp(0.001 *
+                            density_at_temperature(oil, k.ref_temp_k)))
+             for k in oil.kvis
+             if k.weathering == 0.0 and
+             density_at_temperature(oil, k.ref_temp_k) is not None]
+        b = [(10 * math.log(1000.0 *
+                            density_at_temperature(oil, k.ref_temp_k) *
+                            k.m_2_s))
+             for k in oil.kvis
+             if k.weathering == 0.0 and
+             density_at_temperature(oil, k.ref_temp_k) is not None]
+    except:
+        print 'generated exception for oil = ', oil
+        print 'oil.kvis = ', oil.kvis
+        print [(density_at_temperature(oil, k.ref_temp_k), k.m_2_s)
+               for k in oil.kvis
+               if k.weathering == 0.0]
+        raise
+
     t = [k.ref_temp_k
          for k in oil.kvis
          if k.weathering == 0.0]
@@ -391,11 +408,15 @@ def add_bullwinkle_fractions(oil):
         asphaltene fraction or a valid api
     '''
     f_bulls = [0.32 - 3.59 * af.fraction
-               for af in oil.asphaltene_fractions
-               if af > 0]
+               for af in oil.sara_fractions
+               if af.fraction > 0 and af.sara_type == 'Asphaltenes']
+
+    if not f_bulls and oil.api >= 0.0:
+        f_bulls = [0.5762 * math.log10(oil.api)]
 
     if not f_bulls:
-        f_bulls = 0.5762 * math.log10(oil.api)
+        print 'Warning: could not estimate bullwinkle fractions'
+        print '\tOil(sara={0.sara_fractions}, api={0.api}'.format(oil)
 
     # TODO: add it to our oil record
     #oil.bullwinkle_fractions.append(BullwinkleFraction(f_bulls, t))
