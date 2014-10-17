@@ -9,7 +9,7 @@ from hazpy import unit_conversion as uc
 
 from ..common.views import cors_policy, obj_id_from_url
 from ..models import DBSession
-from oil_library.models import Oil
+from oil_library.models import Oil, ImportedRecord
 from oil_library.utilities import get_viscosity
 
 oil_api = Service(name='oil', path='/oil*obj_id',
@@ -38,8 +38,8 @@ def get_oils(request):
                 for o in oils]
     else:
         try:
-            oil = (DBSession.query(Oil)
-                   .filter(Oil.imported.adios_oil_id == obj_id).one())
+            oil = (DBSession.query(Oil).join(ImportedRecord)
+                   .filter(ImportedRecord.adios_oil_id == obj_id).one())
             return oil.tojson()
         except NoResultFound:
             raise HTTPNotFound()
@@ -73,8 +73,6 @@ def get_pour_point(oil):
 
 def get_oil_viscosity(oil):
     if oil.api >= 0 and len(oil.kvis) > 0:
-        print '\nget_viscosity({0.imported.adios_oil_id}) = {1}'.format(oil, get_viscosity(oil, 273.15 + 38))
-        print 'oil.kvis = ', oil.kvis
         return uc.convert('Kinematic Viscosity', 'm^2/s', 'cSt',
                           get_viscosity(oil, 273.15 + 38))
     else:
