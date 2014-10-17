@@ -4,7 +4,7 @@ from cornice import Service
 
 from ..common.views import cors_policy
 from ..models import DBSession
-from oil_library.models import Oil, Category
+from oil_library.models import ImportedRecord, Oil, Category
 
 distinct_api = Service(name='distinct', path='/distinct',
                        description=('List the distinct values of the '
@@ -20,7 +20,7 @@ def get_distinct(request):
     attrs = ('location',
              'field_name')
     for a in attrs:
-        values = [r[0] for r in (DBSession.query(getattr(Oil, a))
+        values = [r[0] for r in (DBSession.query(getattr(ImportedRecord, a))
                                  .distinct().all())]
         res.append(dict(column=a, values=values))
 
