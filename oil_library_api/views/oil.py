@@ -40,7 +40,8 @@ def get_oils(request):
         try:
             oil = (DBSession.query(Oil).join(ImportedRecord)
                    .filter(ImportedRecord.adios_oil_id == obj_id).one())
-            return oil.tojson()
+
+            return prune_oil_json(oil.tojson())
         except NoResultFound:
             raise HTTPNotFound()
 
@@ -77,3 +78,24 @@ def get_oil_viscosity(oil):
                           get_viscosity(oil, 273.15 + 38))
     else:
         return None
+
+
+def prune_oil_json(oil_json):
+    '''
+        The tojson() routine recursively includes a bunch of redundant
+        content that we don't want to return.  So we will prune it.
+    '''
+    for c in oil_json['categories']:
+        del c['oils']
+
+    for d in oil_json['densities']:
+        del d['imported']
+        del d['oil']
+
+    for k in oil_json['kvis']:
+        del k['oil']
+
+    for f in oil_json['sara_fractions']:
+        del f['oil']
+
+    return oil_json
