@@ -86,16 +86,21 @@ def prune_oil_json(oil_json):
         content that we don't want to return.  So we will prune it.
     '''
     for c in oil_json['categories']:
-        del c['oils']
+        if 'oils' in c:
+            del c['oils']
 
     for d in oil_json['densities']:
-        del d['imported']
-        del d['oil']
+        if 'imported' in d:
+            del d['imported']
+        if 'oil' in d:
+            del d['oil']
 
     for k in oil_json['kvis']:
-        del k['oil']
+        if 'oil' in k:
+            del k['oil']
 
     for f in oil_json['sara_fractions']:
-        del f['oil']
+        if 'oil' in f:
+            del f['oil']
 
     return oil_json
