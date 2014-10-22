@@ -36,9 +36,10 @@ def add_oil(record):
     add_resin_fractions(oil)
     add_asphaltene_fractions(oil)
     add_bullwinkle_fractions(oil)
-    add_adhesion(oil)
-    add_sulphur_mass_fraction(oil)
-    add_distillation_cut_boiling_point(oil)
+    add_adhesion(record, oil)
+    add_sulphur_mass_fraction(record, oil)
+    add_soluability(record, oil)
+    add_distillation_cut_boiling_point(record, oil)
 
     record.oil = oil
 
@@ -420,35 +421,60 @@ def add_bullwinkle_fractions(oil):
         f_bulls = [0.5762 * math.log10(oil.api)]
 
     if not f_bulls:
+        # this can happen if we do not have an asphaltene fraction
+        # (thus, viscosity or density) at 15C, and the api is 0.0 or less
         print 'Warning: could not estimate bullwinkle fractions'
-        print '\tOil(sara={0.sara_fractions}, api={0.api}'.format(oil)
+        print ('\tOil(name={0.name}, sara={0.sara_fractions}, api={0.api}'
+               .format(oil))
+    else:
+        oil.bullwinkle_fraction = f_bulls[0]
 
-    # TODO: add it to our oil record
-    # oil.bullwinkle_fraction = f_bulls[0]
 
-
-def add_adhesion(oil):
+def add_adhesion(imported_rec, oil):
     '''
-        This is currently not used by the model.
+        This is currently not used by the model, but we will get it
+        if it exists.
+        Otherwise, we will assign a constant.
     '''
-    pass
+    if imported_rec.adhesion is not None:
+        oil.adhesion_kg_m_2 = imported_rec.adhesion
+    else:
+        oil.adhesion_kg_m_2 = 0.035
 
 
-def add_sulphur_mass_fraction(oil):
+def add_sulphur_mass_fraction(imported_rec, oil):
     '''
-        This is currently not used by the model.
+        This is currently not used by the model, but we will get it
+        if it exists.
+        Otherwise, we will assign a constant per the documentation.
     '''
-    pass
+    if imported_rec.sulphur is not None:
+        oil.sulphur_fraction = imported_rec.sulphur
+    else:
+        oil.sulphur_fraction = 0.0
 
 
-def add_distillation_cut_boiling_point(oil):
+def add_soluability(imported_rec, oil):
+    '''
+        There is no direct soluability attribute in the imported record,
+        so we will just assign a constant per the documentation.
+    '''
+    oil.sulphur_fraction = 0.0
+
+
+def add_distillation_cut_boiling_point(imported_rec, oil):
     '''
         if cuts exist:
             copy them over
         else:
             get a single cut from the API
     '''
-    pass
+    for c in imported_rec.cuts:
+        oil.cuts.append(c)
+
+    if not oil.cuts:
+        # get boiling point from api
+        pass
 
 
 def get_distillation_cut_from_api(oil):
