@@ -89,6 +89,12 @@ def prune_oil_json(oil_json):
         if 'oils' in c:
             del c['oils']
 
+    for c in oil_json['cuts']:
+        if 'imported' in c:
+            del c['imported']
+        if 'oil' in c:
+            del c['oil']
+
     for d in oil_json['densities']:
         if 'imported' in d:
             del d['imported']
