@@ -12,9 +12,9 @@ from oil_library.oil_library_parse import OilLibraryFile
 
 from oil_library.models import DBSession, Base
 
-from .init_imported_record import purge_old_records, add_oil_object
-from .init_categories import process_categories
-from .init_oil import process_oils
+from oil_library.init_imported_record import purge_old_records, add_oil_object
+from oil_library.init_categories import process_categories
+from oil_library.init_oil import process_oils
 
 
 def usage(argv):
