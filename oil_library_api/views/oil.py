@@ -75,7 +75,7 @@ def get_pour_point(oil):
 def get_oil_viscosity(oil):
     if oil.api >= 0 and len(oil.kvis) > 0:
         return uc.convert('Kinematic Viscosity', 'm^2/s', 'cSt',
-                          get_viscosity(oil, 273.15 + 38))
+                          float(get_viscosity(oil, 273.15 + 38)))
     else:
         return None
 
