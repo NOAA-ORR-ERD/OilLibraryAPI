@@ -5,6 +5,7 @@ Common Gnome object request handlers.
 cors_policy = {'origins': (
                            'http://0.0.0.0:8080',
                            'http://localhost:8080',
+                           'http://hazweb2.orr.noaa.gov:7448'
                            ),
                'credentials': True
                }
