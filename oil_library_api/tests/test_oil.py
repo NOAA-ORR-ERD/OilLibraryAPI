@@ -34,51 +34,23 @@ class OilTests(FunctionalTestBase):
 
         # the oil_library module has its own tests for all the oil
         # attributes, but we need to test that we conform to it.
-        for k in ('adhesion',
-                  'adios_oil_id',
+        for k in ('name',
                   'api',
-                  'aromatics',
-                  'asphaltene_content',
-                  'benezene',
-                  'categories',
-                  'comments',
-                  'conrandson_crude',
-                  'conrandson_residuum',
-                  'custom',
-                  'cut_units',
-                  'dispersability_temp_k',
-                  'emuls_constant_max',
-                  'emuls_constant_min',
-                  'field_name',
-                  'flash_point_max_k',
-                  'flash_point_min_indicator',
-                  'flash_point_min_k',
-                  'k0y',
-                  'location',
-                  'naphthenes',
-                  'nickel',
-                  'oil_class',
-                  'oil_name',
-                  'oil_seawater_interfacial_tension_n_m',
-                  'oil_seawater_interfacial_tension_ref_temp_k',
                   'oil_water_interfacial_tension_n_m',
                   'oil_water_interfacial_tension_ref_temp_k',
-                  'paraffins',
-                  'polars',
-                  'pour_point_max_k',
-                  'pour_point_min_indicator',
+                  'oil_seawater_interfacial_tension_n_m',
+                  'oil_seawater_interfacial_tension_ref_temp_k',
                   'pour_point_min_k',
-                  'preferred_oils',
-                  'product_type',
-                  'reference',
-                  'reid_vapor_pressure',
-                  'resins',
-                  'saturates',
-                  'sulphur',
-                  'vanadium',
-                  'viscosity_multiplier',
-                  'water_content_emulsion',
-                  'wax_content'):
+                  'pour_point_max_k',
+                  'flash_point_min_k',
+                  'flash_point_max_k',
+                  'emulsion_water_fraction_max',
+                  'bullwinkle_time',
+                  'bullwinkle_fraction',
+                  'adhesion_kg_m_2',
+                  'sulphur_fraction',
+                  'soluability',
+                  ):
             assert k in oil
 
         for c in oil['cuts']:
@@ -93,26 +65,8 @@ class OilTests(FunctionalTestBase):
                       'weathering'):
                 assert k in d
 
-        for d in oil['dvis']:
-            for k in ('kg_ms',
-                      'ref_temp_k',
-                      'weathering'):
-                assert k in d
-
         for kvis in oil['kvis']:
             for k in ('m_2_s',
                       'ref_temp_k',
                       'weathering'):
                 assert k in kvis
-
-        for s in oil['synonyms']:
-            for k in ('name',):
-                assert k in s
-
-        for t in oil['toxicities']:
-            for k in (u'after_24_hours',
-                      u'after_48_hours',
-                      u'after_96_hours',
-                      u'species',
-                      u'tox_type'):
-                assert k in t
