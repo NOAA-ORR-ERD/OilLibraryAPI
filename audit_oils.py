@@ -53,16 +53,21 @@ print 'oil pour points:', (oil_obj.pour_point_min_k,
                            oil_obj.pour_point_max_k)
 
 
-def get_ptry_values(oil_obj, watson_factor, fraction_of_cut=0.5):
+def get_ptry_values(oil_obj, watson_factor, sub_fraction=None):
     previous_cut_fraction = 0.0
-    for c in oil_obj.cuts:
+    for idx, c in enumerate(oil_obj.cuts):
         T_i = c.vapor_temp_k
 
         F_i = c.fraction - previous_cut_fraction
         previous_cut_fraction = c.fraction
 
         P_try = 1000 * (T_i ** (1.0 / 3.0) / watson_factor)
-        yield (P_try, F_i * fraction_of_cut, T_i)
+
+        if sub_fraction is not None and len(sub_fraction) > idx:
+            print '(f, sub_f):', F_i, sub_fraction[idx]
+            F_i = sub_fraction[idx]
+
+        yield (P_try, F_i, T_i)
 
 mass_left = 1.0
 if oil_obj.imported.resins:
@@ -98,26 +103,74 @@ print 'oil imported cuts =', oil_obj.imported.cuts
 print '\ntrial densities:'
 K_arom = 10.0
 K_sat = 12.0
-for r in get_ptry_values(oil_obj, K_arom):
-    print '\t', r
+ptry_values = ([v for v in get_ptry_values(oil_obj, K_arom)] +
+               [v for v in get_ptry_values(oil_obj, K_sat)])
 
-for r in get_ptry_values(oil_obj, K_sat):
+for r in ptry_values:
     print '\t', r
 
 for f in oil_obj.sara_fractions:
     if f.sara_type in ('Resins', 'Asphaltenes'):
         print '\t', (1100.0, f.fraction)
 
-print '\naverage density based on trials:'
-print sum([(P_try * F_i)
-           for P_try, F_i, T_i in get_ptry_values(oil_obj, K_arom)] +
-          [(P_try * F_i)
-           for P_try, F_i, T_i in get_ptry_values(oil_obj, K_sat)] +
+print '\naverage density based on trials assuming equal sub-fractions:'
+print sum([(P_try * (F_i * 0.5))
+           for P_try, F_i, T_i in ptry_values] +
           [(1100.0 * f.fraction) for f in oil_obj.sara_fractions
            if f.sara_type in ('Resins', 'Asphaltenes')]
           )
 
-print 'Now try to get saturate/aromatic mass fractions based on trials'
+print '\nNow try to get saturate/aromatic mass fractions based on trials'
+print 'molecular weights:'
+for mw in oil_obj.molecular_weights:
+    print '\t', (mw.saturate, mw.aromatic, mw.ref_temp_k)
+
+sa_ratios = []
+for P_try, F_i, T_i in get_ptry_values(oil_obj, K_sat):
+    if T_i < 530.0:
+        sg = P_try / 1000
+        mw = None
+        for v in oil_obj.molecular_weights:
+            if np.isclose(v.ref_temp_k, T_i):
+                mw = v.saturate
+                break
+
+        if mw is not None:
+            print '(F_i, sg, mw) =', (F_i, sg, mw)
+            f_sat = F_i * (2.2843 - 1.98138 * sg - 0.009108 * mw)
+            print 'initial f_sat:', f_sat
+
+            if f_sat >= F_i:
+                f_sat = F_i
+            elif f_sat < 0:
+                f_sat = 0
+
+            f_arom = F_i * (1 - f_sat)
+
+            print '(f_sat, f_arom) =', (f_sat, f_arom)
+            sa_ratios.append((f_sat, f_arom))
+        else:
+            print '\tNo molecular weight at that temperature.'
+    else:
+        f_sat = f_arom = F_i / 2
+        print '(f_sat, f_arom) =', (f_sat, f_arom)
+        sa_ratios.append((f_sat, f_arom))
+
+print '\naverage density based on trials using adjusted fractions:'
+ptry_values = ([v for v in get_ptry_values(oil_obj, K_sat,
+                                           [r[0] for r in sa_ratios])] +
+               [v for v in get_ptry_values(oil_obj, K_arom,
+                                           [r[1] for r in sa_ratios])])
+
+print 'ptry_values:'
+pp.pprint(ptry_values)
+print 'sum of fractions:', sum([F_i for P_try, F_i, T_i in ptry_values])
+print sum([(P_try * F_i)
+           for P_try, F_i, T_i in ptry_values] +
+          [(1100.0 * f.fraction) for f in oil_obj.sara_fractions
+           if f.sara_type in ('Resins', 'Asphaltenes')]
+          )
+
 
 print '\noil sara fractions:'
 print sum([f.fraction for f in oil_obj.sara_fractions
@@ -125,6 +178,14 @@ print sum([f.fraction for f in oil_obj.sara_fractions
 
 print '\noil densities'
 print oil_obj.densities
+
+
+
+
+
+
+
+
 
 
 
