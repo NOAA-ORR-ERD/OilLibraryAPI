@@ -27,6 +27,7 @@ from oil_library.models import (Base, ImportedRecord, Oil,
 from oil_library.oil_props import OilProps
 
 from oil_library.utilities import get_viscosity, get_boiling_points_from_api
+from oil_library.init_oil import density_at_temperature
 
 config_uri = 'development.ini'
 settings = get_appsettings(config_uri,
@@ -53,7 +54,7 @@ print 'oil pour points:', (oil_obj.pour_point_min_k,
                            oil_obj.pour_point_max_k)
 
 
-def get_ptry_values(oil_obj, watson_factor, sub_fraction=None):
+def get_ptry_values(oil_obj, component_type, sub_fraction=None):
     '''
         This gives an initial trial estimate for each density component.
 
@@ -69,6 +70,9 @@ def get_ptry_values(oil_obj, watson_factor, sub_fraction=None):
         :param sub_fraction: a list of fractions to be used in lieu of the
                              calculated cut fractions in the database.
     '''
+    watson_factors = {'Saturates': 12, 'Aromatics': 10}
+    watson_factor = watson_factors[component_type]
+
     previous_cut_fraction = 0.0
     for idx, c in enumerate(oil_obj.cuts):
         T_i = c.vapor_temp_k
@@ -81,11 +85,11 @@ def get_ptry_values(oil_obj, watson_factor, sub_fraction=None):
         if sub_fraction is not None and len(sub_fraction) > idx:
             F_i = sub_fraction[idx]
 
-        yield (P_try, F_i, T_i)
+        yield (P_try, F_i, T_i, component_type)
 
 
 def get_sa_mass_fractions(oil_obj):
-    for P_try, F_i, T_i in get_ptry_values(oil_obj, K_sat):
+    for P_try, F_i, T_i, c_type in get_ptry_values(oil_obj, 'Saturates'):
         if T_i < 530.0:
             sg = P_try / 1000
             mw = None
@@ -115,15 +119,13 @@ def get_sa_mass_fractions(oil_obj):
 
 print 'oil cuts:'
 pp.pprint(oil_obj.cuts)
-print 'oil resins:', oil_obj.imported.resins
-print 'oil aspaltenes:', oil_obj.imported.asphaltene_content
 print 'oil imported cuts =', oil_obj.imported.cuts
 
 print '\ninitial trial densities:'
 K_arom = 10.0
 K_sat = 12.0
-ptry_values = (list(get_ptry_values(oil_obj, K_arom)) +
-               list(get_ptry_values(oil_obj, K_sat)))
+ptry_values = (list(get_ptry_values(oil_obj, 'Aromatics')) +
+               list(get_ptry_values(oil_obj, 'Saturates')))
 
 for r in ptry_values:
     print '\t', r
@@ -134,7 +136,7 @@ for f in oil_obj.sara_fractions:
 
 print '\naverage density based on trials assuming equal sub-fractions:'
 print sum([(P_try * (F_i * 0.5))
-           for P_try, F_i, T_i in ptry_values] +
+           for P_try, F_i, T_i, c_type in ptry_values] +
           [(1100.0 * f.fraction) for f in oil_obj.sara_fractions
            if f.sara_type in ('Resins', 'Asphaltenes')]
           )
@@ -146,32 +148,83 @@ for mw in oil_obj.molecular_weights:
 
 print '\naverage density based on trials using adjusted fractions:'
 sa_ratios = list(get_sa_mass_fractions(oil_obj))
-ptry_values = (list(get_ptry_values(oil_obj, K_sat,
+ptry_values = (list(get_ptry_values(oil_obj, 'Saturates',
                                     [r[0] for r in sa_ratios])) +
-               list(get_ptry_values(oil_obj, K_arom,
+               list(get_ptry_values(oil_obj, 'Aromatics',
                                     [r[1] for r in sa_ratios])))
+
+ra_ptry_values = [(1100.0, f.fraction)
+                  for f in oil_obj.sara_fractions
+                  if f.sara_type in ('Resins', 'Asphaltenes')]
 
 print 'adjusted ptry_values:'
 pp.pprint(ptry_values)
-print sum([(P_try * F_i)
-           for P_try, F_i, T_i in ptry_values] +
-          [(1100.0 * f.fraction) for f in oil_obj.sara_fractions
-           if f.sara_type in ('Resins', 'Asphaltenes')]
-          )
+print 'average ptry', (sum([(P_try * F_i)
+                            for P_try, F_i, T_i, c_type in ptry_values]) /
+                       sum([(F_i) for P_try, F_i, T_i, c_type in ptry_values]))
 
-print '\nSum of fractions:', sum([F_i for P_try, F_i, T_i in ptry_values])
-print 'Oil sara fractions:', sum([f.fraction for f in oil_obj.sara_fractions
-                                  if f.sara_type in ('Resins', 'Asphaltenes')])
+ptry_avg_density = sum([(P_try * F_i)
+                        for P_try, F_i, T_i, c_type in ptry_values] +
+                       [(P_try * F_i)
+                        for P_try, F_i in ra_ptry_values]
+                       )
 
-print '\noil densities'
-print oil_obj.densities
+total_sa_fraction = sum([F_i for P_try, F_i, T_i, c_type in ptry_values])
+print '\nSum of SA fractions:', total_sa_fraction
+
+total_ra_fraction = sum([f.fraction for f in oil_obj.sara_fractions
+                         if f.sara_type in ('Resins', 'Asphaltenes')])
+print 'Sum of RA fractions:', total_ra_fraction
+print 'Sum of SARA fractions:', total_sa_fraction + total_ra_fraction
+
+# our estimated RA fractions deviate a bit from the imported RA fractions
+print 'oil resins:', oil_obj.imported.resins
+print 'oil aspaltenes:', oil_obj.imported.asphaltene_content
+
+print '\nAdjusted avg density:', ptry_avg_density
+
+oil_density = density_at_temperature(oil_obj, 288.15)
+print 'Oil density at 288K:', oil_density
+
+print ('percent deviation: {0}'
+       .format((oil_density - ptry_avg_density) / oil_density * 100))
+
+print '\n\nNow we will try to adjust our ptry densities to match the oil total density'
+oil_sa_avg_density = ((oil_density - total_ra_fraction * 1100.0) /
+                      total_sa_fraction)
+print 'SA avg density approximated from Oil & SARA fractions:', oil_sa_avg_density
+
+density_adjustment = oil_sa_avg_density / ptry_avg_density
+print 'adjusting ptry densities by a factor of', density_adjustment
+
+ptry_values = [(P_try * density_adjustment, F_i, T_i)
+               for P_try, F_i, T_i, c_type in ptry_values]
+
+print 'Density adjusted ptry_values:'
+pp.pprint(ptry_values)
+ptry_avg_density = sum([(P_try * F_i) for P_try, F_i, T_i in ptry_values] +
+                       [(1100.0 * f.fraction)
+                        for f in oil_obj.sara_fractions
+                        if f.sara_type in ('Resins', 'Asphaltenes')])
+print '\nDensity adjusted avg density:', ptry_avg_density
+
+print ('percent deviation: {0}'
+       .format((oil_density - ptry_avg_density) / oil_density * 100))
 
 
+for o in session.query(Oil):
+    if o.bullwinkle_fraction > 1.0:
+        print 'Bullwinkle Fraction:', o.bullwinkle_fraction,
+        print 'Asphaltene Fraction: ', [af for af in o.sara_fractions
+                                        if af.sara_type == 'Asphaltenes'],
+        print 'API:', o.api
 
-
-
-
-
+for o in session.query(Oil):
+    if o.bullwinkle_fraction < 0.0:
+        print 'Bullwinkle Fraction:', o.bullwinkle_fraction,
+        print 'Asphaltene Fraction: ', [af for af in o.sara_fractions
+                                        if af.sara_type == 'Asphaltenes'],
+        print 'API:', o.api
 
 
 

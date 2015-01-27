@@ -44,10 +44,10 @@ def audit_distillation_cuts(settings):
             num_cuts.append(len(o.cuts))
             for i, cut in enumerate(o.cuts):
                 if len(liquid_temp) > i:
-                    if cut.liquid_temp:
-                        liquid_temp[i].append(cut.liquid_temp)
-                    if cut.vapor_temp:
-                        vapor_temp[i].append(cut.vapor_temp)
+                    if cut.liquid_temp_k:
+                        liquid_temp[i].append(cut.liquid_temp_k)
+                    if cut.vapor_temp_k:
+                        vapor_temp[i].append(cut.vapor_temp_k)
                     if cut.fraction:
                         fraction[i].append(cut.fraction)
                 else:

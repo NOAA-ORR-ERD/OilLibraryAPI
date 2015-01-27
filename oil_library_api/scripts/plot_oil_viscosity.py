@@ -28,14 +28,14 @@ from pyramid.scripts.common import parse_vars
 
 from oil_library.models import (DBSession,
                                 Base,
-                                Oil)
+                                Oil, ImportedRecord)
 from oil_library.oil_props import OilProps
 
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
-    print('usage: %s <config_uri> <adios oil id>\n'
-          '(example: "%s development.ini  AD00047")' % (cmd, cmd))
+    print('usage: {0} <config_uri> <adios oil id>\n'
+          '(example: "{0} development.ini adios_id=AD00047")'.format(cmd))
     sys.exit(1)
 
 
@@ -56,8 +56,8 @@ def plot_oil_viscosities(settings):
 
         print 'our session: %s' % (session)
         try:
-            oilobj = (session.query(Oil)
-                      .filter(Oil.adios_oil_id == adios_id)
+            oilobj = (session.query(Oil).join(ImportedRecord)
+                      .filter(ImportedRecord.adios_oil_id == adios_id)
                       .one())
         except NoResultFound:
             raise NoResultFound('No Oil was found matching adios_id {0}'
@@ -68,20 +68,20 @@ def plot_oil_viscosities(settings):
 
             oil_props = OilProps(oilobj)
             print '\nOilProps:', oil_props
-            print oil_props.viscosity
+            print oil_props.get_viscosity()
 
-            print '\nOur Dynamic viscosities:'
-            print [v for v in oilobj.dvis]
+            print '\nOur viscosities:'
+            print [v for v in oilobj.kvis]
 
-            print '\nOur unweathered viscosities (kg/m^3, Kdegrees):'
-            vis = [v for v in oil_props.viscosities if v.weathering <= 0.0]
+            print '\nOur unweathered viscosities (m^2/s, Kdegrees):'
+            vis = [v for v in oilobj.kvis if v.weathering <= 0.0]
             print vis
-            for i in [(v.meters_squared_per_sec, v.ref_temp, v.weathering)
+            for i in [(v.m_2_s, v.ref_temp_k, v.weathering)
                       for v in vis]:
                 print i
 
-            x = np.array([v.ref_temp for v in vis]) - 273.15
-            y = np.array([v.meters_squared_per_sec for v in vis])
+            x = np.array([v.ref_temp_k for v in vis]) - 273.15
+            y = np.array([v.m_2_s for v in vis])
             xmin = x.min()
             xmax = x.max()
             xpadding = .5 if xmax == xmin else (xmax - xmin) * .3
@@ -90,7 +90,7 @@ def plot_oil_viscosities(settings):
             ypadding = (ymax / 2) if ymax == ymin else (ymax - ymin) * .3
             plt.plot(x, y, 'ro')
             plt.xlabel(r'Temperature ($^\circ$C)')
-            plt.ylabel('Unweathered Dynamic Viscosity (kg/m$^3$)')
+            plt.ylabel('Unweathered Kinematic Viscosity (m$^2$/s)')
             plt.yscale('log', subsy=[2, 3, 4, 5, 6, 7, 8, 9])
             plt.grid(True)
             plt.axis([xmin - xpadding, xmax + xpadding, 0, ymax + ypadding])
@@ -104,7 +104,7 @@ def plot_oil_viscosities(settings):
                     xalign = xpadding / 3
                 yalign = ypadding / 3
 
-                plt.annotate('(%s$^\circ$C, %s kg/m$^3$)' % (xx, yy),
+                plt.annotate('(%s$^\circ$C, %s m$^2$/s)' % (xx, yy),
                              xy=(xx + (xalign / 10),
                                  yy + (yalign / 10)),
                              xytext=(xx + xalign, yy + yalign),
