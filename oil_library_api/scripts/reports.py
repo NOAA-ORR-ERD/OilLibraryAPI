@@ -13,6 +13,8 @@ from oil_library.models import (DBSession,
                                 Base,
                                 Oil)
 
+from .score_oils import score_imported_oils
+
 
 def usage(argv):
     cmd = os.path.basename(argv[0])
@@ -183,6 +185,10 @@ def audit_cuts(argv=sys.argv):
 
 def audit(argv=sys.argv):
     main(argv, audit_database)
+
+
+def score_oils(argv=sys.argv):
+    main(argv, score_imported_oils)
 
 
 def main(argv=sys.argv, proc=export_database):
