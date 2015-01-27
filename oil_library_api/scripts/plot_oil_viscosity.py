@@ -50,7 +50,7 @@ def plot_oil_viscosities(settings):
         # -- Our loading routine --
         session = DBSession()
 
-        if not 'adios_id' in settings:
+        if 'adios_id' not in settings:
             raise ValueError('adios_id setting is required.')
         adios_id = settings['adios_id']
 

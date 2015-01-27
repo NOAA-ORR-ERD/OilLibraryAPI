@@ -8,6 +8,13 @@ pp = PrettyPrinter(indent=2)
 import numpy
 np = numpy
 
+try:
+    import xlwt
+    xlwt_available = True
+except:
+    print 'The xlwt module is not available!'
+    xlwt_available = False
+
 from oil_library.models import (DBSession,
                                 ImportedRecord)
 
@@ -17,13 +24,36 @@ def score_imported_oils(settings):
        Here is where we score the quality of the oil records that we have
        imported from the flatfile.
     '''
+    adios_id = settings['adios_id'] if 'adios_id' in settings else None
+
     with transaction.manager:
         session = DBSession()
 
-        sys.stderr.write('scoring the imported oil records in database...')
-        for o in session.query(ImportedRecord):
-            print o.adios_oil_id, o,
-            print '\t\tScore: ', score_imported_oil(o)
+        if adios_id is not None:
+            sys.stderr.write('scoring the imported oil record {0}...\n'
+                             .format(adios_id))
+            try:
+                oil_obj = (session.query(ImportedRecord)
+                           .filter(ImportedRecord.adios_oil_id == adios_id)
+                           .one())
+
+                to_xls = settings['to_xls'] if 'to_xls' in settings else None
+
+                if to_xls is not None and xlwt_available:
+                    export_oil_score_to_xls(oil_obj)
+                else:
+                    print '{0}\t{1}\t{2}'.format(oil_obj.adios_oil_id,
+                                                 oil_obj.oil_name,
+                                                 score_imported_oil(oil_obj))
+            except:
+                print 'Could not find record {0}'.format(adios_id)
+                raise
+        else:
+            sys.stderr.write('scoring the imported oil records in database...')
+            for o in session.query(ImportedRecord):
+                print '{0}\t{1}\t{2}'.format(o.adios_oil_id,
+                                             o.oil_name,
+                                             score_imported_oil(o))
 
 
 def score_imported_oil(imported_rec):
@@ -251,6 +281,85 @@ def score_toxicities(imported_rec):
     # We have a maximum number of 3 EC toxicities and 3 LC toxicities
     # in our flat file.  We can set a lower acceptable number later.
     return sum(scores) / 6
+
+
+def export_oil_score_to_xls(imported_rec):
+    book = xlwt.Workbook(encoding="utf-8")
+
+    sheet1 = book.add_sheet("Oil Record")
+    add_oil_record_to_sheet(sheet1, imported_rec)
+
+    # scores = []
+    # scores.append(score_demographics(imported_rec))
+    # scores.append(score_api(imported_rec))
+    # scores.append(score_pour_point(imported_rec))
+    # scores.append(score_flash_point(imported_rec))
+    # scores.append(score_sara_fractions(imported_rec))
+    # scores.append(score_emulsion_constants(imported_rec))
+    # scores.append(score_interfacial_tensions(imported_rec))
+    # scores.append(score_densities(imported_rec))
+    # scores.append(score_viscosities(imported_rec))
+    # scores.append(score_cuts(imported_rec))
+    # scores.append(score_toxicities(imported_rec))
+
+    book.save("{0}.xls".format(imported_rec.adios_oil_id))
+
+
+def add_oil_record_to_sheet(sheet, imported_rec):
+    fields = ('oil_name',
+              'adios_oil_id',
+              'custom',
+              'location',
+              'field_name',
+              'reference',
+              'api',
+              'pour_point_min_k',
+              'pour_point_max_k',
+              'product_type',
+              'comments',
+              'asphaltene_content',
+              'wax_content',
+              'aromatics',
+              'water_content_emulsion',
+              'emuls_constant_min',
+              'emuls_constant_max',
+              'flash_point_min_k',
+              'flash_point_max_k',
+              'oil_water_interfacial_tension_n_m',
+              'oil_water_interfacial_tension_ref_temp_k',
+              'oil_seawater_interfacial_tension_n_m',
+              'oil_seawater_interfacial_tension_ref_temp_k',
+              'cut_units',
+              'oil_class',
+              'adhesion',
+              'benezene',
+              'naphthenes',
+              'paraffins',
+              'polars',
+              'resins',
+              'saturates',
+              'sulphur',
+              'reid_vapor_pressure',
+              'viscosity_multiplier',
+              'nickel',
+              'vanadium',
+              'conrandson_residuum',
+              'conrandson_crude',
+              'dispersability_temp_k',
+              'preferred_oils',
+              'k0y',)
+
+    for idx, f in enumerate(fields):
+        sheet.write(idx, 0, f)
+        sheet.write(idx, 1, getattr(imported_rec, f),
+                    xlwt.easyxf('align: horiz left'))
+
+        col = sheet.col(0)
+        col.width = 200 * 44
+        col = sheet.col(1)
+        col.width = 200 * 50
+
+
 
 
 
