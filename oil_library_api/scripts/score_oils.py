@@ -286,21 +286,17 @@ def score_toxicities(imported_rec):
 def export_oil_score_to_xls(imported_rec):
     book = xlwt.Workbook(encoding="utf-8")
 
-    sheet1 = book.add_sheet("Oil Record")
-    add_oil_record_to_sheet(sheet1, imported_rec)
+    add_oil_record_to_sheet(book.add_sheet("Oil Record"), imported_rec)
 
-    # scores = []
-    # scores.append(score_demographics(imported_rec))
-    # scores.append(score_api(imported_rec))
-    # scores.append(score_pour_point(imported_rec))
-    # scores.append(score_flash_point(imported_rec))
-    # scores.append(score_sara_fractions(imported_rec))
-    # scores.append(score_emulsion_constants(imported_rec))
-    # scores.append(score_interfacial_tensions(imported_rec))
-    # scores.append(score_densities(imported_rec))
-    # scores.append(score_viscosities(imported_rec))
-    # scores.append(score_cuts(imported_rec))
-    # scores.append(score_toxicities(imported_rec))
+    add_densities_to_sheet(book.add_sheet("Densities"), imported_rec)
+
+    add_viscosities_to_sheet(book.add_sheet("Viscosities"), imported_rec)
+
+    add_cuts_to_sheet(book.add_sheet("Cuts"), imported_rec)
+
+    add_toxicities_to_sheet(book.add_sheet("Toxicities"), imported_rec)
+
+    add_scores_to_sheet(book.add_sheet("Scores"), imported_rec)
 
     book.save("{0}.xls".format(imported_rec.adios_oil_id))
 
@@ -355,13 +351,139 @@ def add_oil_record_to_sheet(sheet, imported_rec):
                     xlwt.easyxf('align: horiz left'))
 
         col = sheet.col(0)
-        col.width = 200 * 44
+        col.width = 220 * 43
         col = sheet.col(1)
-        col.width = 200 * 50
+        col.width = 220 * 50
 
 
+def add_densities_to_sheet(sheet, imported_rec):
+    sheet.write(0, 0, 'Index', xlwt.easyxf('font: underline on;'))
+    sheet.write(0, 1, 'kg/m^3', xlwt.easyxf('font: underline on;'))
+    sheet.write(0, 2, 'Reference Temperature',
+                xlwt.easyxf('font: underline on;'))
+    sheet.write(0, 3, 'Weathering', xlwt.easyxf('font: underline on;'))
+    col = sheet.col(2)
+    col.width = 220 * 21
+
+    for idx, d in enumerate(imported_rec.densities):
+        sheet.write(1 + idx, 0, idx)
+        sheet.write(1 + idx, 1, d.kg_m_3)
+        sheet.write(1 + idx, 2, d.ref_temp_k)
+        sheet.write(1 + idx, 3, d.weathering)
 
 
+def add_viscosities_to_sheet(sheet, imported_rec):
+    sheet.write_merge(0, 0, 0, 1, 'Kinematic Viscosities')
+    sheet.write(1, 0, 'Index', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 1, 'm^2/s', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 2, 'Reference Temperature',
+                xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 3, 'Weathering', xlwt.easyxf('font: underline on;'))
+    col = sheet.col(2)
+    col.width = 220 * 21
+
+    idx = 0
+    for idx, k in enumerate(imported_rec.kvis):
+        sheet.write(2 + idx, 0, idx)
+        sheet.write(2 + idx, 1, k.m_2_s)
+        sheet.write(2 + idx, 2, k.ref_temp_k)
+        sheet.write(2 + idx, 3, k.weathering)
+
+    v_offset = 2 + idx + 2
+    sheet.write_merge(v_offset, v_offset, 0, 1, 'Dynamic Viscosities')
+    v_offset += 1
+    sheet.write(v_offset, 0, 'Index', xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 1, 'kg/ms', xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 2, 'Reference Temperature',
+                xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 3, 'Weathering', xlwt.easyxf('font: underline on;'))
+
+    v_offset += 1
+    for idx, d in enumerate(imported_rec.dvis):
+        sheet.write(v_offset + idx, 0, idx)
+        sheet.write(v_offset + idx, 1, d.kg_ms)
+        sheet.write(v_offset + idx, 2, d.ref_temp_k)
+        sheet.write(v_offset + idx, 3, d.weathering)
 
 
+def add_cuts_to_sheet(sheet, imported_rec):
+    sheet.write(0, 0, 'Index', xlwt.easyxf('font: underline on;'))
+    sheet.write(0, 1, 'Vapor Temperature', xlwt.easyxf('font: underline on;'))
+    sheet.write(0, 2, 'Liquid Temperature', xlwt.easyxf('font: underline on;'))
+    sheet.write(0, 3, 'Fraction', xlwt.easyxf('font: underline on;'))
+    col = sheet.col(1)
+    col.width = 220 * 21
+    col = sheet.col(2)
+    col.width = 220 * 21
 
+    for idx, c in enumerate(imported_rec.cuts):
+        sheet.write(1 + idx, 0, idx)
+        sheet.write(1 + idx, 1, c.vapor_temp_k)
+        sheet.write(1 + idx, 2, c.liquid_temp_k)
+        sheet.write(1 + idx, 3, c.fraction)
+
+
+def add_toxicities_to_sheet(sheet, imported_rec):
+    sheet.write_merge(0, 0, 0, 1, 'Effective Concentrations')
+    sheet.write(1, 0, 'Index', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 1, 'Species', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 2, 'After 24H', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 3, 'After 48H', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 4, 'After 96H', xlwt.easyxf('font: underline on;'))
+
+    idx = 0
+    for idx, ec in enumerate([t for t in imported_rec.toxicities
+                              if t.tox_type == 'EC']):
+        sheet.write(2 + idx, 0, idx)
+        sheet.write(2 + idx, 1, ec.species)
+        sheet.write(2 + idx, 2, ec.after_24h)
+        sheet.write(2 + idx, 3, ec.after_48h)
+        sheet.write(2 + idx, 4, ec.after_96h)
+
+    v_offset = 2 + idx + 2
+    sheet.write_merge(v_offset, v_offset, 0, 1, 'Lethal Concentrations')
+    v_offset += 1
+    sheet.write(v_offset, 0, 'Index', xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 1, 'Species', xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 2, 'After 24H', xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 3, 'After 48H', xlwt.easyxf('font: underline on;'))
+    sheet.write(v_offset, 4, 'After 96H', xlwt.easyxf('font: underline on;'))
+
+    v_offset += 1
+    for idx, lc in enumerate([t for t in imported_rec.toxicities
+                              if t.tox_type == 'LC']):
+        sheet.write(v_offset + idx, 0, idx)
+        sheet.write(v_offset + idx, 1, lc.species)
+        sheet.write(v_offset + idx, 2, lc.after_24h)
+        sheet.write(v_offset + idx, 3, lc.after_48h)
+        sheet.write(v_offset + idx, 4, lc.after_96h)
+
+
+def add_scores_to_sheet(sheet, imported_rec):
+    sheet.write_merge(0, 0, 0, 1, 'Oil Category Scores')
+    sheet.write(1, 0, 'Category', xlwt.easyxf('font: underline on;'))
+    sheet.write(1, 1, 'Score', xlwt.easyxf('font: underline on;'))
+    col = sheet.col(0)
+    col.width = 220 * 27
+
+    tests = (score_demographics,
+             score_api,
+             score_pour_point,
+             score_flash_point,
+             score_sara_fractions,
+             score_emulsion_constants,
+             score_interfacial_tensions,
+             score_densities,
+             score_viscosities,
+             score_cuts,
+             score_toxicities)
+
+    idx = 0
+    for idx, t in enumerate(tests):
+        sheet.write(2 + idx, 0, t.__name__)
+        sheet.write(2 + idx, 1, t(imported_rec))
+
+    v_offset = 2 + idx + 2
+    sheet.write(v_offset, 0, 'Total Score')
+    sheet.write(v_offset, 1,
+                xlwt.Formula('AVERAGE($B$3:$B${0})'.format(v_offset)))
