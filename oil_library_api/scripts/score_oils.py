@@ -484,6 +484,6 @@ def add_scores_to_sheet(sheet, imported_rec):
         sheet.write(2 + idx, 1, t(imported_rec))
 
     v_offset = 2 + idx + 2
-    sheet.write(v_offset, 0, 'Total Score')
+    sheet.write(v_offset, 0, 'Overall Score')
     sheet.write(v_offset, 1,
                 xlwt.Formula('AVERAGE($B$3:$B${0})'.format(v_offset)))
