@@ -29,13 +29,6 @@ def usage(argv):
 def initialize_sql(settings):
     engine = engine_from_config(settings, 'sqlalchemy.')
     DBSession.configure(bind=engine)
-
-    # here, we configure our transaction manager to keep the session open
-    # after a commit.
-    # - This of course means that we need to manually close the session when
-    #   we are done.
-    DBSession.configure(extension=ZopeTransactionExtension(keep_session=True))
-
     Base.metadata.create_all(engine)
 
 
@@ -73,11 +66,15 @@ def load_database(settings):
             rowcount += 1
 
         print 'finished!!!  {0} rows processed.'.format(rowcount)
-
-        process_oils(session)
-        process_categories(session)
-
         session.close()
+
+        # we need to open a session for each record here because we want
+        # the option of transactionally rolling back rejected records.
+        # So we just pass the session class instead of an open session.
+        process_oils(DBSession)
+
+        session = DBSession()
+        process_categories(session)
 
 
 def main(argv=sys.argv, proc=load_database):
