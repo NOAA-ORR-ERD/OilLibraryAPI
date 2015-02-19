@@ -94,8 +94,9 @@ def get_sa_mass_fractions(oil_obj):
             sg = P_try / 1000
             mw = None
             for v in oil_obj.molecular_weights:
-                if np.isclose(v.ref_temp_k, T_i):
-                    mw = v.saturate
+                if (np.isclose(v.ref_temp_k, T_i) and
+                        v.sara_type == 'Saturates'):
+                    mw = v.g_mol
                     break
 
             if mw is not None:
@@ -144,7 +145,7 @@ print sum([(P_try * (F_i * 0.5))
 print '\nNow try to get saturate/aromatic mass fractions based on trials'
 print 'molecular weights:'
 for mw in oil_obj.molecular_weights:
-    print '\t', (mw.saturate, mw.aromatic, mw.ref_temp_k)
+    print '\t', (mw.sara_type, mw.g_mol, mw.ref_temp_k)
 
 print '\naverage density based on trials using adjusted fractions:'
 sa_ratios = list(get_sa_mass_fractions(oil_obj))
