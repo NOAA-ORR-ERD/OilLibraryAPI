@@ -15,8 +15,8 @@ except:
     print 'The xlwt module is not available!'
     xlwt_available = False
 
-from oil_library.models import (DBSession,
-                                ImportedRecord)
+from oil_library import _get_db_session
+from oil_library.models import ImportedRecord
 
 
 def score_imported_oils(settings):
@@ -27,7 +27,7 @@ def score_imported_oils(settings):
     adios_id = settings['adios_id'] if 'adios_id' in settings else None
 
     with transaction.manager:
-        session = DBSession()
+        session = _get_db_session()
 
         if adios_id is not None:
             sys.stderr.write('scoring the imported oil record {0}...\n'

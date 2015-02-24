@@ -9,8 +9,9 @@ from pyramid.paster import (get_appsettings,
 
 from pyramid.scripts.common import parse_vars
 
-from oil_library.models import (DBSession,
-                                Base,
+from oil_library import _get_db_session
+from oil_library.models import (Base,
+                                ImportedRecord,
                                 Oil)
 
 from .score_oils import score_imported_oils
@@ -35,7 +36,7 @@ def audit_distillation_cuts(settings):
        when we initialized the database.
     '''
     with transaction.manager:
-        session = DBSession()
+        session = _get_db_session()
 
         sys.stderr.write('Auditing the records in database...')
         num_cuts = []
@@ -108,36 +109,36 @@ def audit_database(settings):
        when we initialized the database.
     '''
     with transaction.manager:
-        session = DBSession()
+        session = _get_db_session()
 
         sys.stderr.write('Auditing the records in database...')
-        for o in session.query(Oil):
+        for o in session.query(ImportedRecord):
             if 1 and o.synonyms:
                     print
                     print [s.name for s in o.synonyms]
 
             if 1 and o.densities:
                     print
-                    print [d.kg_per_m_cubed for d in o.densities]
-                    print [d.ref_temp for d in o.densities]
+                    print [d.kg_m_3 for d in o.densities]
+                    print [d.ref_temp_k for d in o.densities]
                     print [d.weathering for d in o.densities]
 
             if 1 and o.kvis:
                     print
-                    print [k.meters_squared_per_sec for k in o.kvis]
-                    print [k.ref_temp for k in o.kvis]
+                    print [k.m_2_s for k in o.kvis]
+                    print [k.ref_temp_k for k in o.kvis]
                     print [k.weathering for k in o.kvis]
 
             if 1 and o.dvis:
                     print
-                    print [d.kg_per_msec for d in o.dvis]
-                    print [d.ref_temp for d in o.dvis]
+                    print [d.kg_ms for d in o.dvis]
+                    print [d.ref_temp_k for d in o.dvis]
                     print [d.weathering for d in o.dvis]
 
             if 1 and o.cuts:
                     print
-                    print [c.vapor_temp for c in o.cuts]
-                    print [c.liquid_temp for c in o.cuts]
+                    print [c.vapor_temp_k for c in o.cuts]
+                    print [c.liquid_temp_k for c in o.cuts]
                     print [c.fraction for c in o.cuts]
 
             if 1:
@@ -145,18 +146,18 @@ def audit_database(settings):
                 if tox:
                     print
                     print [t.species for t in tox]
-                    print [t.after_24_hours for t in tox]
-                    print [t.after_48_hours for t in tox]
-                    print [t.after_96_hours for t in tox]
+                    print [t.after_24h for t in tox]
+                    print [t.after_48h for t in tox]
+                    print [t.after_96h for t in tox]
 
             if 1:
                 tox = [t for t in o.toxicities if t.tox_type == 'LC']
                 if tox:
                     print
                     print [t.species for t in tox]
-                    print [t.after_24_hours for t in tox]
-                    print [t.after_48_hours for t in tox]
-                    print [t.after_96_hours for t in tox]
+                    print [t.after_24h for t in tox]
+                    print [t.after_48h for t in tox]
+                    print [t.after_96h for t in tox]
 
         print 'finished!!!'
 
@@ -167,7 +168,7 @@ def export_database(settings):
        when we initialized the database.
     '''
     with transaction.manager:
-        session = DBSession()
+        session = _get_db_session()
 
         sys.stderr.write('Exporting the records in database...')
         for o in session.query(Oil):
@@ -204,7 +205,6 @@ def main(argv=sys.argv, proc=export_database):
                                options=options)
 
     try:
-        initialize_sql(settings)
         proc(settings)
     except:
         print "{0} FAILED\n".format(proc)

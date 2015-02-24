@@ -8,7 +8,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from hazpy import unit_conversion as uc
 
 from ..common.views import cors_policy, obj_id_from_url
-from ..models import DBSession
+
+from oil_library import _get_db_session
 from oil_library.models import Oil, ImportedRecord
 from oil_library.utilities import get_viscosity
 
@@ -18,14 +19,14 @@ oil_api = Service(name='oil', path='/oil*obj_id',
 
 @oil_api.get()
 def get_oils(request):
+    session = _get_db_session()
     obj_id = obj_id_from_url(request)
 
     if not obj_id:
         # Return all oils in JSON format.  We only return the searchable
         # columns.
-        oils = DBSession.query(Oil)
-        return [{
-                 'adios_oil_id': o.imported.adios_oil_id,
+        oils = session.query(Oil)
+        return [{'adios_oil_id': o.imported.adios_oil_id,
                  'name': o.name,
                  'location': o.imported.location,
                  'field_name': o.imported.field_name,
@@ -38,7 +39,7 @@ def get_oils(request):
                 for o in oils]
     else:
         try:
-            oil = (DBSession.query(Oil).join(ImportedRecord)
+            oil = (session.query(Oil).join(ImportedRecord)
                    .filter(ImportedRecord.adios_oil_id == obj_id).one())
 
             return prune_oil_json(oil.tojson())
@@ -60,7 +61,7 @@ def get_category_ancestors(category):
     cat_list = []
     cat_list.append(category)
 
-    while category.parent != None:
+    while category.parent is not None:
         cat_list.append(category.parent)
         category = category.parent
 

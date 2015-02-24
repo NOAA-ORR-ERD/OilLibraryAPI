@@ -21,7 +21,7 @@ from sqlalchemy.orm.relationships import (RelationshipProperty,
 from pyramid.paster import (get_appsettings,
                             setup_logging)
 
-from oil_library_api.models import DBSession
+from oil_library import _get_db_session
 from oil_library.models import (Base, ImportedRecord, Oil,
                                 Density, Toxicity, Category)
 from oil_library.oil_props import OilProps
@@ -29,14 +29,8 @@ from oil_library.oil_props import OilProps
 from oil_library.utilities import get_viscosity, get_boiling_points_from_api
 from oil_library.init_oil import density_at_temperature
 
-config_uri = 'development.ini'
-settings = get_appsettings(config_uri,
-                           name='oil_library_api')
-engine = engine_from_config(settings, 'sqlalchemy.')
-DBSession.configure(bind=engine)
-Base.metadata.create_all(engine)
 
-session = DBSession()
+session = _get_db_session()
 
 oil_obj = session.query(Oil).filter(Oil.name == 'ALASKA NORTH SLOPE').one()
 props_obj = OilProps(oil_obj)

@@ -26,9 +26,8 @@ from pyramid.paster import (get_appsettings,
 
 from pyramid.scripts.common import parse_vars
 
-from oil_library.models import (DBSession,
-                                Base,
-                                Oil, ImportedRecord)
+from oil_library import _get_db_session
+from oil_library.models import (Base, Oil, ImportedRecord)
 from oil_library.oil_props import OilProps
 
 
@@ -39,16 +38,10 @@ def usage(argv):
     sys.exit(1)
 
 
-def initialize_sql(settings):
-    engine = engine_from_config(settings, 'sqlalchemy.')
-    DBSession.configure(bind=engine)
-    Base.metadata.create_all(engine)
-
-
 def plot_oil_viscosities(settings):
     with transaction.manager:
         # -- Our loading routine --
-        session = DBSession()
+        session = _get_db_session()
 
         if 'adios_id' not in settings:
             raise ValueError('adios_id setting is required.')
@@ -127,7 +120,6 @@ def main(argv=sys.argv, proc=plot_oil_viscosities):
                                options=options)
 
     try:
-        initialize_sql(settings)
         proc(settings)
     except:
         print "{0} FAILED\n".format(proc)

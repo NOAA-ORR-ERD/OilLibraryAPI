@@ -82,7 +82,6 @@ setup(name='oil_library_api',
       entry_points=('[paste.app_factory]\n'
                     '  main = oil_library_api:main\n'
                     '[console_scripts]\n'
-                    '  init_oil_library = oil_library_api.scripts.initdb:main\n'
                     '  export_oil_library = oil_library_api.scripts.reports:export\n'
                     '  audit_oil_library = oil_library_api.scripts.reports:audit\n'
                     '  audit_oil_cuts = oil_library_api.scripts.reports:audit_cuts\n'
