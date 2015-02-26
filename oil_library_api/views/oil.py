@@ -5,7 +5,7 @@ from pyramid.httpexceptions import HTTPNotFound
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from hazpy import unit_conversion as uc
+import unit_conversion as uc
 
 from ..common.views import cors_policy, obj_id_from_url
 
