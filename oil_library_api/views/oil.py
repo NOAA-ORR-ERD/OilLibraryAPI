@@ -85,28 +85,15 @@ def prune_oil_json(oil_json):
         The tojson() routine recursively includes a bunch of redundant
         content that we don't want to return.  So we will prune it.
     '''
-    for c in oil_json['categories']:
-        if 'oils' in c:
-            del c['oils']
+    for oil_attr_name in ('categories', 'cuts', 'densities', 'kvis',
+                          'sara_fractions', 'sara_densities',
+                          'molecular_weights'):
+        for oil_attr in oil_json[oil_attr_name]:
+            for attr_name in ('imported', 'oils', 'oil', 'oil_id'):
+                if attr_name in oil_attr:
+                    del oil_attr[attr_name]
 
-    for c in oil_json['cuts']:
-        if 'imported' in c:
-            del c['imported']
-        if 'oil' in c:
-            del c['oil']
-
-    for d in oil_json['densities']:
-        if 'imported' in d:
-            del d['imported']
-        if 'oil' in d:
-            del d['oil']
-
-    for k in oil_json['kvis']:
-        if 'oil' in k:
-            del k['oil']
-
-    for f in oil_json['sara_fractions']:
-        if 'oil' in f:
-            del f['oil']
+    del oil_json['imported']['oil']
+    del oil_json['estimated']['oil']
 
     return oil_json
