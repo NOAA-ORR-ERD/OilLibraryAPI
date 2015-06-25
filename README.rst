@@ -1,4 +1,9 @@
+=============
 OilLibraryAPI
 =============
 
-A web service that interfaces with the oil library database.
+A simple web service that interfaces with the PyGnome oil library database.
+
+`Installation <installation.rst>`_
+
+`API Documentation <api_documentation.rst>`_
