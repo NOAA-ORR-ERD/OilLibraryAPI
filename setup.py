@@ -61,7 +61,6 @@ class cleandev(clean):
 setup(name='oil_library_api',
       version=0.1,
       description='OilLibraryAPI',
-      long_description=README,
       classifiers=["Programming Language :: Python",
                    "Framework :: Pylons",
                    "Topic :: Internet :: WWW/HTTP",
