@@ -10,9 +10,6 @@ from distutils.command.clean import clean
 # could run setup from anywhere
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(here, 'README.rst')) as f:
-    README = f.read()
-
 requires = ['cornice',
             'waitress',
             'WebTest',
