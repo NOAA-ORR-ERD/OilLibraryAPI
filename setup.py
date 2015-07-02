@@ -14,6 +14,7 @@ requires = ['cornice',
             'waitress',
             'WebTest',
             'webhelpers2>=2.0b5',
+            'ujson',
             'pyramid_debugtoolbar',
             'pyramid_tm',
             'PasteScript']
