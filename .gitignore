@@ -1,6 +1,7 @@
 *.pyc
 *.swp
 *~
+config.ini
 
 /oil_library_api.egg-info
 /*.egg
