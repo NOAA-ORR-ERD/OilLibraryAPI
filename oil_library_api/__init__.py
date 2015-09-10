@@ -20,6 +20,6 @@ def main(global_config, **settings):
     config.add_renderer('json', renderer)
 
     config.include("cornice")
-    config.include('pyramid_mako')
+    # config.include('pyramid_mako')
     config.scan("oil_library_api.views")
     return config.make_wsgi_app()
