@@ -4,21 +4,10 @@ import sys
 import os
 import transaction
 
-from pprint import PrettyPrinter
-pp = PrettyPrinter(indent=2)
+import numpy as np
 
-import numpy
-np = numpy
+from matplotlib import pyplot as plt
 
-import scipy
-sp = scipy
-
-import matplotlib
-mpl = matplotlib
-from matplotlib import pyplot
-plt = pyplot
-
-from sqlalchemy import engine_from_config
 from sqlalchemy.orm.exc import NoResultFound
 
 from pyramid.paster import (get_appsettings,
@@ -27,7 +16,7 @@ from pyramid.paster import (get_appsettings,
 from pyramid.scripts.common import parse_vars
 
 from oil_library import _get_db_session
-from oil_library.models import (Base, Oil, ImportedRecord)
+from oil_library.models import Oil, ImportedRecord
 from oil_library.oil_props import OilProps
 
 

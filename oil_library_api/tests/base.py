@@ -17,7 +17,7 @@ class GnomeTestCase(TestCase):
         self.project_root = os.path.abspath(os.path.dirname(here))
 
     def get_settings(self,
-                     config_file='../../development.ini#oil_library_api'):
+                     config_file='../../config-example.ini#oil_library_api'):
         here = os.path.dirname(__file__)
         return appconfig('config:%s' % config_file, relative_to=here)
 
