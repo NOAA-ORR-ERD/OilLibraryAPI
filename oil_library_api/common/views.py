@@ -2,14 +2,7 @@
 Common Gnome object request handlers.
 """
 
-cors_policy = {'origins': (
-                           'http://0.0.0.0:8080',
-                           'http://localhost:8080',
-                           'http://hazweb2.orr.noaa.gov:7448'
-                           ),
-               'credentials': True
-               }
-
+cors_policy = {'credentials': True}
 
 def obj_id_from_url(request):
     # the pyramid URL parser returns a tuple of 0 or more
