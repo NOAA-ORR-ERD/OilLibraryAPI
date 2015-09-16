@@ -5,8 +5,6 @@ from pyramid.httpexceptions import HTTPNotFound
 
 from sqlalchemy.orm.exc import NoResultFound
 
-import unit_conversion as uc
-
 from ..common.views import cors_policy, obj_id_from_url
 
 from oil_library import _get_db_session

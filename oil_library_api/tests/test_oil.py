@@ -29,7 +29,7 @@ class OilTests(FunctionalTestBase):
         self.testapp.get('/oil/{}'.format('bogus'), status=404)
 
     def test_get_oil_valid_id(self):
-        resp = self.testapp.get('/oil/{0}'.format('AD00025'))
+        resp = self.testapp.get('/oil/{0}'.format('AD00009'))
         oil = resp.json_body
 
         # the oil_library module has its own tests for all the oil

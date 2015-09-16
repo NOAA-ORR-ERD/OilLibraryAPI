@@ -1,0 +1,9 @@
+pyramid
+paste
+ujson
+pyramid_tm
+cornice
+waitress
+OilLibrary
+WebTest
+pytest
