@@ -2,11 +2,7 @@
 import sys
 import transaction
 
-from pprint import PrettyPrinter
-pp = PrettyPrinter(indent=2)
-
-import numpy
-np = numpy
+import numpy as np
 
 try:
     import xlwt
@@ -17,6 +13,9 @@ except:
 
 from oil_library import _get_db_session
 from oil_library.models import ImportedRecord
+
+from pprint import PrettyPrinter
+pp = PrettyPrinter(indent=2)
 
 
 def score_imported_oils(settings):
