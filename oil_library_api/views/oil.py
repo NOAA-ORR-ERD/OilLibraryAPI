@@ -53,7 +53,8 @@ def get_category_paths(oil, sep='-'):
 
 
 def get_synonyms(oil, sep=','):
-    return [s.name for s in oil.imported.synonyms]
+    syn_list = [s.name for s in oil.imported.synonyms]
+    return ','.join(syn_list)
 
 
 def get_category_ancestors(category):
