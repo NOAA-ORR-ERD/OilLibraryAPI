@@ -34,6 +34,7 @@ def get_oils(request):
                  'pour_point': get_pour_point(o),
                  'viscosity': get_oil_viscosity(o),
                  'categories': get_category_paths(o),
+                 'categories_str': get_category_paths_str(o),
                  'synonyms': get_synonyms(o)
                  }
                 for o in oils]
@@ -50,6 +51,10 @@ def get_oils(request):
 def get_category_paths(oil, sep='-'):
     return [sep.join([c.name for c in get_category_ancestors(cat)])
             for cat in oil.categories]
+
+
+def get_category_paths_str(oil, sep='-'):
+    return ','.join(get_category_paths(oil))
 
 
 def get_synonyms(oil, sep=','):
