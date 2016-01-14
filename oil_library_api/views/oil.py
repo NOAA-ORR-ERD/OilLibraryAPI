@@ -10,6 +10,7 @@ from ..common.views import cors_policy, obj_id_from_url
 from oil_library import _get_db_session
 from oil_library.models import Oil, ImportedRecord
 from oil_library.utilities import get_viscosity
+import re
 
 oil_api = Service(name='oil', path='/oil*obj_id',
                   description="List All Oils",  cors_policy=cors_policy)
@@ -54,7 +55,9 @@ def get_category_paths(oil, sep='-'):
 
 
 def get_category_paths_str(oil, sep='-'):
-    return ','.join(get_category_paths(oil))
+    regex = re.compile(r'\b(Crude-|Refined-)\b')
+    cat_str = ','.join(sorted(set(get_category_paths(oil))))
+    return regex.sub("", cat_str)
 
 
 def get_synonyms(oil, sep=','):
