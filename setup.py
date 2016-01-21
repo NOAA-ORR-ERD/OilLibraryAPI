@@ -49,7 +49,7 @@ class cleandev(clean):
 
 
 setup(name='oil_library_api',
-      version=0.0.1,
+      version='0.0.1',
       description='OilLibraryAPI',
       classifiers=["Programming Language :: Python",
                    "Framework :: Pylons",
