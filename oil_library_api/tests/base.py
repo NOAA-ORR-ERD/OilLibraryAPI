@@ -18,8 +18,22 @@ class GnomeTestCase(TestCase):
 
     def get_settings(self,
                      config_file='../../config-example.ini#oil_library_api'):
-        here = os.path.dirname(__file__)
-        return appconfig('config:%s' % config_file, relative_to=here)
+
+        settings = {
+                    '__file__': '/Users/james.makela/Dev/git_repos/OilLibraryAPI/config-example.ini',
+                    'here': '/Users/james.makela/Dev/git_repos/OilLibraryAPI',
+                    'cors_policy.origins': ('http://0.0.0.0:8080\n'
+                                            'http://localhost:8080'),
+                    'pyramid.default_locale_name': 'en',
+                    'pyramid.includes': ('pyramid_tm\n'
+                                         'cornice'),
+                    'pyramid.debug_notfound': 'false',
+                    'pyramid.debug_routematch': 'false',
+                    'pyramid.debug_authorization': 'false',
+                    'pyramid.reload_templates': 'true',
+                    }
+
+        return settings
 
 
 class FunctionalTestBase(GnomeTestCase):
