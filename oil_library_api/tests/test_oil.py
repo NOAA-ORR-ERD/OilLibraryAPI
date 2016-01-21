@@ -1,10 +1,10 @@
 """
 Functional tests for the Model Web API
 """
+from base import FunctionalTestBase
+
 from pprint import PrettyPrinter
 pp = PrettyPrinter(indent=2)
-
-from base import FunctionalTestBase
 
 
 class OilTests(FunctionalTestBase):

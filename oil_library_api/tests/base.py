@@ -2,10 +2,8 @@
 base.py: Base classes for different types of tests.
 """
 import os
-import shutil
-from unittest import TestCase
 
-from paste.deploy.loadwsgi import appconfig
+from unittest import TestCase
 from webtest import TestApp
 
 from oil_library_api import main
@@ -16,13 +14,9 @@ class GnomeTestCase(TestCase):
         here = os.path.dirname(__file__)
         self.project_root = os.path.abspath(os.path.dirname(here))
 
-    def get_settings(self,
-                     config_file='../../config-example.ini#oil_library_api'):
+    def get_settings(self):
 
-        settings = {
-                    '__file__': '/Users/james.makela/Dev/git_repos/OilLibraryAPI/config-example.ini',
-                    'here': '/Users/james.makela/Dev/git_repos/OilLibraryAPI',
-                    'cors_policy.origins': ('http://0.0.0.0:8080\n'
+        settings = {'cors_policy.origins': ('http://0.0.0.0:8080\n'
                                             'http://localhost:8080'),
                     'pyramid.default_locale_name': 'en',
                     'pyramid.includes': ('pyramid_tm\n'
