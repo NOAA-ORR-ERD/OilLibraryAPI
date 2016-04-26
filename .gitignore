@@ -6,3 +6,4 @@ config.ini
 /oil_library_api.egg-info
 /*.egg
 /*.sqlite
+build

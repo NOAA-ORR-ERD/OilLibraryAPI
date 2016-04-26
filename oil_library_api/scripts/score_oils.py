@@ -32,21 +32,21 @@ def score_imported_oils(settings):
             sys.stderr.write('scoring the imported oil record {0}...\n'
                              .format(adios_id))
             try:
-                oil_obj = (session.query(ImportedRecord)
+                imp_obj = (session.query(ImportedRecord)
                            .filter(ImportedRecord.adios_oil_id == adios_id)
                            .one())
-
-                to_xls = settings['to_xls'] if 'to_xls' in settings else None
-
-                if to_xls is not None and xlwt_available:
-                    export_oil_score_to_xls(oil_obj)
-                else:
-                    print '{0}\t{1}\t{2}'.format(oil_obj.adios_oil_id,
-                                                 oil_obj.oil_name,
-                                                 score_imported_oil(oil_obj))
             except:
-                print 'Could not find record {0}'.format(adios_id)
+                print 'Could not find imported record {0}'.format(adios_id)
                 raise
+
+            to_xls = settings['to_xls'] if 'to_xls' in settings else None
+
+            if to_xls is not None and xlwt_available:
+                export_oil_score_to_xls(imp_obj)
+            else:
+                print '{0}\t{1}\t{2}'.format(imp_obj.adios_oil_id,
+                                             imp_obj.oil_name,
+                                             score_imported_oil(imp_obj))
         else:
             sys.stderr.write('scoring the imported oil records in database...')
             for o in session.query(ImportedRecord):
@@ -143,7 +143,7 @@ def score_sara_fractions(imported_rec):
     else:
         scores.append(0.0)
 
-    if imported_rec.asphaltene_content is not None:
+    if imported_rec.asphaltenes is not None:
         scores.append(1.0)
     else:
         scores.append(0.0)
@@ -297,6 +297,14 @@ def export_oil_score_to_xls(imported_rec):
 
     add_scores_to_sheet(book.add_sheet("Scores"), imported_rec)
 
+    if imported_rec.oil is not None:
+        add_sara_fractions_to_sheet(book.add_sheet("SARA Fractions"),
+                                    imported_rec.oil)
+        add_sara_densities_to_sheet(book.add_sheet("SARA Densities"),
+                                    imported_rec.oil)
+        add_molecular_weights_to_sheet(book.add_sheet("Molecular Weights"),
+                                       imported_rec.oil)
+
     book.save("{0}.xls".format(imported_rec.adios_oil_id))
 
 
@@ -312,7 +320,7 @@ def add_oil_record_to_sheet(sheet, imported_rec):
               'pour_point_max_k',
               'product_type',
               'comments',
-              'asphaltene_content',
+              'asphaltenes',
               'wax_content',
               'aromatics',
               'water_content_emulsion',
@@ -327,7 +335,7 @@ def add_oil_record_to_sheet(sheet, imported_rec):
               'cut_units',
               'oil_class',
               'adhesion',
-              'benezene',
+              'benzene',
               'naphthenes',
               'paraffins',
               'polars',
@@ -362,7 +370,7 @@ def add_densities_to_sheet(sheet, imported_rec):
                 xlwt.easyxf('font: underline on;'))
     sheet.write(0, 3, 'Weathering', xlwt.easyxf('font: underline on;'))
     col = sheet.col(2)
-    col.width = 220 * 21
+    col.width = 220 * 22
 
     for idx, d in enumerate(imported_rec.densities):
         sheet.write(1 + idx, 0, idx)
@@ -379,7 +387,7 @@ def add_viscosities_to_sheet(sheet, imported_rec):
                 xlwt.easyxf('font: underline on;'))
     sheet.write(1, 3, 'Weathering', xlwt.easyxf('font: underline on;'))
     col = sheet.col(2)
-    col.width = 220 * 21
+    col.width = 220 * 22
 
     idx = 0
     for idx, k in enumerate(imported_rec.kvis):
@@ -486,3 +494,58 @@ def add_scores_to_sheet(sheet, imported_rec):
     sheet.write(v_offset, 0, 'Overall Score')
     sheet.write(v_offset, 1,
                 xlwt.Formula('AVERAGE($B$3:$B${0})'.format(v_offset)))
+
+
+def add_sara_fractions_to_sheet(sheet, oil_rec):
+    header_style = xlwt.easyxf('font: underline on;')
+    sheet.write(0, 0, 'Index', header_style)
+    sheet.write(0, 1, 'SARA Type', header_style)
+    sheet.write(0, 2, 'Reference Temperature', header_style)
+    sheet.write(0, 3, 'Fraction', header_style)
+
+    col = sheet.col(2)
+    col.width = 220 * 22
+
+    for idx, c in enumerate(oil_rec.sara_fractions):
+        sheet.write(1 + idx, 0, idx)
+        sheet.write(1 + idx, 1, c.sara_type)
+        sheet.write(1 + idx, 2, c.ref_temp_k)
+        sheet.write(1 + idx, 3, c.fraction)
+
+
+def add_sara_densities_to_sheet(sheet, oil_rec):
+    header_style = xlwt.easyxf('font: underline on;')
+    sheet.write(0, 0, 'Index', header_style)
+    sheet.write(0, 1, 'SARA Type', header_style)
+    sheet.write(0, 2, 'Reference Temperature', header_style)
+    sheet.write(0, 3, 'Density (kg/m^3)', header_style)
+
+    col = sheet.col(2)
+    col.width = 220 * 22
+    col = sheet.col(3)
+    col.width = 220 * 16
+
+    for idx, c in enumerate(oil_rec.sara_densities):
+        sheet.write(1 + idx, 0, idx)
+        sheet.write(1 + idx, 1, c.sara_type)
+        sheet.write(1 + idx, 2, c.ref_temp_k)
+        sheet.write(1 + idx, 3, c.density)
+
+
+def add_molecular_weights_to_sheet(sheet, oil_rec):
+    header_style = xlwt.easyxf('font: underline on;')
+    sheet.write(0, 0, 'Index', header_style)
+    sheet.write(0, 1, 'SARA Type', header_style)
+    sheet.write(0, 2, 'Reference Temperature', header_style)
+    sheet.write(0, 3, 'Molecular Weight (g/mol)', header_style)
+
+    col = sheet.col(2)
+    col.width = 220 * 22
+    col = sheet.col(3)
+    col.width = 220 * 23
+
+    for idx, c in enumerate(oil_rec.molecular_weights):
+        sheet.write(1 + idx, 0, idx)
+        sheet.write(1 + idx, 1, c.sara_type)
+        sheet.write(1 + idx, 2, c.ref_temp_k)
+        sheet.write(1 + idx, 3, c.g_mol)
