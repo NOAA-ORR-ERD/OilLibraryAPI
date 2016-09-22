@@ -4,6 +4,6 @@ ujson
 pyramid_tm
 cornice
 waitress
-OilLibrary
+oil-library
 WebTest
 pytest
