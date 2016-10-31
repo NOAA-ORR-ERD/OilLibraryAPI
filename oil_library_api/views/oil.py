@@ -9,7 +9,6 @@ from ..common.views import cors_policy, obj_id_from_url
 
 from oil_library import _get_db_session
 from oil_library.models import Oil, ImportedRecord
-from oil_library.utilities import get_viscosity
 import re
 
 oil_api = Service(name='oil', path='/oil*obj_id',
@@ -88,7 +87,7 @@ def get_pour_point(oil):
 
 def get_oil_viscosity(oil):
     if oil.api >= 0 and len(oil.kvis) > 0:
-        return get_viscosity(oil, 273.15 + 38)
+        return oil.kvis_at_temp(273.15 + 38)
     else:
         return None
 

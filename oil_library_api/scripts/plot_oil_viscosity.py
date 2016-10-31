@@ -50,7 +50,7 @@ def plot_oil_viscosities(settings):
 
             oil_props = OilProps(oilobj)
             print '\nOilProps:', oil_props
-            print oil_props.get_viscosity()
+            print oil_props.kvis_at_temp()
 
             print '\nOur viscosities:'
             print [v for v in oilobj.kvis]
