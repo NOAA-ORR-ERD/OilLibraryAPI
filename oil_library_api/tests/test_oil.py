@@ -49,7 +49,7 @@ class OilTests(FunctionalTestBase):
                   'bullwinkle_fraction',
                   'adhesion_kg_m_2',
                   'sulphur_fraction',
-                  'soluability',
+                  'solubility',
                   ):
             assert k in oil
 

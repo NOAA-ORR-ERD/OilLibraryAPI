@@ -1,5 +1,7 @@
 """ Cornice services.
 """
+import re
+
 from cornice import Service
 from pyramid.httpexceptions import HTTPNotFound
 
@@ -9,7 +11,7 @@ from ..common.views import cors_policy, obj_id_from_url
 
 from oil_library import _get_db_session
 from oil_library.models import Oil, ImportedRecord
-import re
+from oil_library.oil_props import OilProps
 
 oil_api = Service(name='oil', path='/oil*obj_id',
                   description="List All Oils",  cors_policy=cors_policy)
@@ -87,7 +89,8 @@ def get_pour_point(oil):
 
 def get_oil_viscosity(oil):
     if oil.api >= 0 and len(oil.kvis) > 0:
-        return oil.kvis_at_temp(273.15 + 38)
+        oil_props = OilProps(oil)
+        return oil_props.kvis_at_temp(273.15 + 38)
     else:
         return None
 
