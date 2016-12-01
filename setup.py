@@ -11,7 +11,7 @@ from distutils.command.clean import clean
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.md')).read()
 pkg_name = 'oil_library_api'
-pkg_version = '0.0.1'
+pkg_version = '0.0.2'
 
 
 def clean_files():
