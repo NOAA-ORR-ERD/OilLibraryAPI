@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import sys
-import transaction
 
 import numpy as np
+import transaction
 
 try:
     import xlwt
@@ -14,8 +14,20 @@ except:
 from oil_library import _get_db_session
 from oil_library.models import ImportedRecord
 
-from pprint import PrettyPrinter
-pp = PrettyPrinter(indent=2)
+
+def aggregate_score(Q_i, w_i=None):
+    '''
+        General method for aggregating a number of sub-scores.
+        We implement a weighted average for this.
+    '''
+    Q_i = np.array(Q_i)
+
+    if w_i is None:
+        w_i = np.ones(Q_i.shape)
+    else:
+        w_i = np.array(w_i)
+
+    return np.sum(w_i * Q_i) / np.sum(w_i)
 
 
 def score_imported_oils(settings):
@@ -56,20 +68,19 @@ def score_imported_oils(settings):
 
 
 def score_imported_oil(imported_rec):
-    scores = []
-    scores.append(score_demographics(imported_rec))
-    scores.append(score_api(imported_rec))
-    scores.append(score_pour_point(imported_rec))
-    scores.append(score_flash_point(imported_rec))
-    scores.append(score_sara_fractions(imported_rec))
-    scores.append(score_emulsion_constants(imported_rec))
-    scores.append(score_interfacial_tensions(imported_rec))
-    scores.append(score_densities(imported_rec))
-    scores.append(score_viscosities(imported_rec))
-    scores.append(score_cuts(imported_rec))
-    scores.append(score_toxicities(imported_rec))
+    scores = [(score_api(imported_rec), 5.0),
+              (score_densities(imported_rec), 5.0),
+              (score_viscosities(imported_rec), 5.0),
+              (score_sara_fractions(imported_rec), 5.0),
+              (score_cuts(imported_rec), 5.0),
+              (score_pour_point(imported_rec), 5.0),
+              (score_demographics(imported_rec), 1.0),
+              (score_flash_point(imported_rec), 1.0),
+              (score_interfacial_tensions(imported_rec), 1.0),
+              (score_emulsion_constants(imported_rec), 1.0),
+              (score_toxicities(imported_rec), 1.0)]
 
-    return sum(scores) / len(scores)
+    return aggregate_score(*zip(*scores))
 
 
 def score_demographics(imported_rec):
@@ -84,202 +95,236 @@ def score_demographics(imported_rec):
         else:
             scores.append(0.0)
 
-    return sum(scores) / len(scores)
+    return aggregate_score(scores)
 
 
 def score_api(imported_rec):
-    scores = []
-
-    if imported_rec.api is not None:
-        scores.append(1.0)
+    if imported_rec.api is None:
+        return 0.0
     else:
-        scores.append(0.0)
-
-    return sum(scores) / len(scores)
-
-
-def score_pour_point(imported_rec):
-    scores = []
-
-    if imported_rec.pour_point_min_k is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.pour_point_max_k is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    return sum(scores) / len(scores)
-
-
-def score_flash_point(imported_rec):
-    scores = []
-
-    if imported_rec.flash_point_min_k is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.flash_point_max_k is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    return sum(scores) / len(scores)
-
-
-def score_sara_fractions(imported_rec):
-    scores = []
-
-    if imported_rec.saturates is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.aromatics is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.asphaltenes is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.resins is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    return sum(scores) / len(scores)
-
-
-def score_emulsion_constants(imported_rec):
-    scores = []
-
-    if imported_rec.emuls_constant_min is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.emuls_constant_max is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    return sum(scores) / len(scores)
-
-
-def score_interfacial_tensions(imported_rec):
-    scores = []
-
-    if imported_rec.oil_water_interfacial_tension_n_m is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.oil_water_interfacial_tension_ref_temp_k is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.oil_seawater_interfacial_tension_n_m is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    if imported_rec.oil_seawater_interfacial_tension_ref_temp_k is not None:
-        scores.append(1.0)
-    else:
-        scores.append(0.0)
-
-    return sum(scores) / len(scores)
+        return 1.0
 
 
 def score_densities(imported_rec):
     scores = []
 
     for d in imported_rec.densities:
-        # For right now, we will just check that the value at temperature
-        # is there.  The weathering attribute is kinda optional
-        if (d.kg_m_3 is not None and
-                d.ref_temp_k is not None):
-            scores.append(1.0)
+        scores.append(score_density_rec(d))
 
     # We have a maximum number of 4 density field sets in our flat file
     # We can set a lower acceptable number later
-    return sum(scores) / 4
+    if len(scores) < 4:
+        scores += [0.0] * (4 - len(scores))
+
+    # compute our weights
+    w_i = 1.0 / (2.0 ** (np.arange(len(scores)) + 1))
+    w_i[-1] = w_i[-2]  # duplicate the last weight so we sum to 1.0
+
+    return aggregate_score(scores, w_i)
+
+
+def score_density_rec(density_rec):
+    if (density_rec.kg_m_3 is not None and
+            density_rec.ref_temp_k is not None):
+        return 1.0
+    else:
+        return 0.0
+
+
+def score_pour_point(imported_rec):
+    scores = []
+
+    scores.append(score_pour_point_max(imported_rec))
+    scores.append(score_pour_point_min(imported_rec))
+    w_i = [2.0, 1.0]
+
+    return aggregate_score(scores, w_i)
+
+
+def score_flash_point(imported_rec):
+    if (imported_rec.flash_point_min_k is not None or
+            imported_rec.flash_point_max_k is not None):
+        return 1.0
+    else:
+        return 0.0
+
+
+def score_pour_point_min(imported_rec):
+    return (1.0 if imported_rec.pour_point_min_k is not None else 0.0)
+
+
+def score_pour_point_max(imported_rec):
+    return (1.0 if imported_rec.pour_point_max_k is not None else 0.0)
+
+
+def score_sara_fractions(imported_rec):
+    scores = []
+
+    scores.append(score_sara_saturates(imported_rec))
+    scores.append(score_sara_aromatics(imported_rec))
+    scores.append(score_sara_resins(imported_rec))
+    scores.append(score_sara_asphaltenes(imported_rec))
+
+    return aggregate_score(scores)
+
+
+def score_sara_saturates(imported_rec):
+    return (1.0 if imported_rec.saturates is not None else 0.0)
+
+
+def score_sara_aromatics(imported_rec):
+    return (1.0 if imported_rec.aromatics is not None else 0.0)
+
+
+def score_sara_resins(imported_rec):
+    return (1.0 if imported_rec.resins is not None else 0.0)
+
+
+def score_sara_asphaltenes(imported_rec):
+    return (1.0 if imported_rec.asphaltenes is not None else 0.0)
+
+
+def score_emulsion_constants(imported_rec):
+    scores = []
+
+    scores.append(score_emulsion_constant_min(imported_rec))
+    scores.append(score_emulsion_constant_max(imported_rec))
+
+    return aggregate_score(scores)
+
+
+def score_emulsion_constant_min(imported_rec):
+    return (1.0 if imported_rec.emuls_constant_min is not None else 0.0)
+
+
+def score_emulsion_constant_max(imported_rec):
+    return (1.0 if imported_rec.emuls_constant_max is not None else 0.0)
+
+
+def score_interfacial_tensions(imported_rec):
+    scores = []
+
+    scores.append(score_oil_water_tension(imported_rec))
+    scores.append(score_oil_seawater_tension(imported_rec))
+
+    return aggregate_score(scores)
+
+
+def score_oil_water_tension(imported_rec):
+    rec = imported_rec
+    if (rec.oil_water_interfacial_tension_n_m is not None and
+            rec.oil_water_interfacial_tension_ref_temp_k is not None):
+        return 1.0
+    else:
+        return 0.0
+
+
+def score_oil_seawater_tension(imported_rec):
+    rec = imported_rec
+    if (rec.oil_seawater_interfacial_tension_n_m is not None and
+            rec.oil_seawater_interfacial_tension_ref_temp_k is not None):
+        return 1.0
+    else:
+        return 0.0
 
 
 def score_viscosities(imported_rec):
     scores = []
+    all_temps = set()
+    all_viscosities = []
 
-    scores.append(score_kvis(imported_rec))
-    scores.append(score_dvis(imported_rec))
+    for v in imported_rec.kvis + imported_rec.dvis:
+        if v.ref_temp_k not in all_temps:
+            all_viscosities.append(v)
+            all_temps.add(v.ref_temp_k)
 
-    return sum(scores) / len(scores)
+    for v in all_viscosities:
+        scores.append(score_single_viscosity(v))
 
+    # We require a minimum number of 4 viscosity field sets
+    if len(scores) < 4:
+        scores += [0.0] * (4 - len(scores))
 
-def score_kvis(imported_rec):
-    scores = []
+    # compute our weights
+    w_i = 1.0 / (2.0 ** (np.arange(len(scores)) + 1))
+    w_i[-1] = w_i[-2]  # duplicate the last weight so we sum to 1.0
 
-    for k in imported_rec.kvis:
-        # For right now, we will just check that the value at temperature
-        # is there.  The weathering attribute is kinda optional
-        if (k.m_2_s is not None and
-                k.ref_temp_k is not None):
-            scores.append(1.0)
-
-    # We have a maximum number of 6 kvis field sets in our flat file
-    # We can set a lower acceptable number later
-    return sum(scores) / 6
+    return aggregate_score(scores, w_i)
 
 
-def score_dvis(imported_rec):
-    scores = []
+def score_single_viscosity(viscosity_rec):
+    temp = viscosity_rec.ref_temp_k
 
-    for d in imported_rec.dvis:
-        # For right now, we will just check that the value at temperature
-        # is there.  The weathering attribute is kinda optional.
-        if (d.kg_ms is not None and
-                d.ref_temp_k is not None):
-            scores.append(1.0)
+    try:
+        value = viscosity_rec.m_2_s
+    except AttributeError:
+        value = viscosity_rec.kg_ms
 
-    # We have a maximum number of 6 dvis field sets in our flat file.
-    # We can set a lower acceptable number later.
-    return sum(scores) / 6
+    if (value is not None and temp is not None):
+        return 1.0
+    else:
+        return 0.0
 
 
 def score_cuts(imported_rec):
     scores = []
 
     for c in imported_rec.cuts:
-        if (c.vapor_temp_k is not None and
-                c.fraction is not None and
-                c.fraction > 0.0 and
-                c.fraction < 1.0):
-            scores.append(1.0)
+        scores.append(score_single_cut(c))
 
-    # We have a maximum number of 15 cut field sets in our flat file.
-    # We can set a lower acceptable number later.
-    return sum(scores) / 15
+    # We would like a minimum number of 10 distillation cuts
+    if len(scores) < 10:
+        scores += [0.0] * (10 - len(scores))
+
+    return aggregate_score(scores)
+
+
+def score_single_cut(cut_rec):
+    scores = []
+
+    scores.append(cut_has_vapor_temp(cut_rec))
+    scores.append(cut_has_fraction(cut_rec))
+    scores.append(cut_has_liquid_temp(cut_rec))
+
+    if not all([(s == 1.0) for s in scores[:2]]):
+        return 0.0
+    else:
+        w_i = [4.5, 4.5, 1.0]
+        return aggregate_score(scores, w_i)
+
+
+def cut_has_vapor_temp(cut_rec):
+    return (0.0 if cut_rec.vapor_temp_k is None else 1.0)
+
+
+def cut_has_liquid_temp(cut_rec):
+    return (0.0 if cut_rec.liquid_temp_k is None else 1.0)
+
+
+def cut_has_fraction(cut_rec):
+    return (0.0 if cut_rec.fraction is None else 1.0)
 
 
 def score_toxicities(imported_rec):
     scores = []
 
     for t in imported_rec.toxicities:
-        if (t.species is not None and
-                t.after_24h is not None and
-                t.after_48h is not None and
-                t.after_96h is not None):
-            scores.append(1.0)
+        scores.append(score_single_toxicity(t))
 
-    # We have a maximum number of 3 EC toxicities and 3 LC toxicities
-    # in our flat file.  We can set a lower acceptable number later.
-    return sum(scores) / 6
+    if any([(s == 1.0) for s in scores]):
+        return 1.0
+    else:
+        return 0.0
+
+
+def score_single_toxicity(tox_rec):
+    if (tox_rec.species is not None and
+        (tox_rec.after_24h is not None or
+         tox_rec.after_48h is not None or
+         tox_rec.after_96h is not None)):
+        return 1.0
+    else:
+        return 0.0
 
 
 def export_oil_score_to_xls(imported_rec):
