@@ -38,7 +38,7 @@ def get_oils(request):
                  'categories': get_category_paths(o),
                  'categories_str': get_category_paths_str(o),
                  'synonyms': get_synonyms(o),
-                 'score': o.score
+                 'quality_index': o.quality_index
                  }
                 for o in oils]
     else:
