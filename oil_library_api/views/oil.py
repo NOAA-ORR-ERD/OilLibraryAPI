@@ -37,7 +37,8 @@ def get_oils(request):
                  'viscosity': get_oil_viscosity(o),
                  'categories': get_category_paths(o),
                  'categories_str': get_category_paths_str(o),
-                 'synonyms': get_synonyms(o)
+                 'synonyms': get_synonyms(o),
+                 'score': o.score
                  }
                 for o in oils]
     else:
