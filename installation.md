@@ -1,20 +1,28 @@
 # Installing the OilLibraryAPI server
 
+**NOTE:** These instructions assume you are familiar with python pacakge installation, etc.
+
+
 The OilLibraryAPI web server piggybacks on top of the existing oil_library
-module that is found inside the PyGnome project, and it depends on a
-successful installation of that project.
+package that is related to the PyGnome project, and it depends on a
+successful installation of that package.
 
-Please go to the PyGnome project and install it as a prerequisite of this
-project.
+Please go to the OilLirary project and install it as a prerequisite of this
+project:
 
-Of course, if you don't need the full capabilities of PyGnome, and would simply
-like to use the oil_library, you can follow these slightly-simpler instructions::
+https://github.com/NOAA-ORR-ERD/OilLibrary
+
+This should work:
+
+(this is for the version on gitHub -- if you have another repo to access, use that url)
 
 ```
-> git checkout <url_to_py_gnome>
-> cd <path_to_py_gnome>
-> cd oil_library
-> python setup.py develop
+> git clone https://github.com/NOAA-ORR-ERD/OilLibrary.git
+> cd OilLibrary
+> conda install --file requirements.txt
+or
+> pip install -r requirements.txt
+> python setup.py install
 ```
 
 At this time, you should have the oil_library module available to you::
@@ -28,7 +36,11 @@ If the previous module imported correctly, you should be able to start the
 OilLibrary web server.
 
 ```
-> git checkout <url_to_oil_library_api>
-> cd <path_to_oil_library_api>
+> git clone https://github.com/NOAA-ORR-ERD/OilLibraryAPI.git
+> cd oillibraryapi
+> conda install --file requirements.txt
+or
+> pip install -r requirements.txt
+> python setup.py install
 > pserve development.ini --reload
 ```

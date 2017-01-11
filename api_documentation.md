@@ -1,13 +1,15 @@
 # API Documentation
 
 This web server's API has been designed specifically to be used with the PyGnome web client
-(the WebGnomeClient project) 
+(the WebGnomeClient project)
 
 As such, it is very simple and has no additional features beyond what the client needs.
 
 So without further hesitation, Here are the APIs.
 
 ## /distinct
+
+Example: `http://0.0.0.0:9898/distinct`
 
 This link supplies a list of unique values for certain searchable fields that the web client needs to build its oil querying form.
 
@@ -52,8 +54,11 @@ It returns a JSON structure similar to the example below:
   }
  ]
 ```
-    
+
 ## /oil
+
+Example: `http://0.0.0.0:9898/oil`
+
 
 This link returns a JSON structure containing a list of searchable fields for all oils in the database.  Keep in mind that this is not every attribute of every oil, but just the fields that the web client can use to search for oils.
 
@@ -96,13 +101,16 @@ It returns a JSON structure similar to the example below:
 
 ## /oil/{adios_oil_id}
 
+Example: `http://0.0.0.0:9898/oil/AD00009`
+
+
 This link searches for an oil record based on the passed-in identifier, and returns a JSON structure containing all the attributes of that oil
 
 
 It returns a JSON structure similar to the example below:
 
 ```javascript
-{  
+{
  "name": "ABU SAFAH",
  "adios_oil_id": "AD00009",
  "api": 28.0,

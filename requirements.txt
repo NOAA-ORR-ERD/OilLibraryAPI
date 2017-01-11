@@ -4,6 +4,8 @@ ujson
 pyramid_tm
 cornice
 waitress
-oil-library
 WebTest
 pytest
+# oil library is required, but not pip or conda installable
+# https://github.com/NOAA-ORR-ERD/OilLibrary
+# oil_library
