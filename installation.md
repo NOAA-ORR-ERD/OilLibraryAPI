@@ -88,13 +88,13 @@ or
 ### starting the server
 
 ```
-> pserve development.ini
+> pserve config-example.ini
 ```
 
 or
 
 ```
-> pserve development.ini --reload
+> pserve config-example.ini --reload
 ```
 
 Using "--reload" allows the server to re-load itself when you change the code -- great for development, not required for running it.
