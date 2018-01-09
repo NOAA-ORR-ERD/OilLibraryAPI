@@ -17,6 +17,18 @@ oil_api = Service(name='oil', path='/oil*obj_id',
                   description="List All Oils",  cors_policy=cors_policy)
 
 
+def memoize_oil_arg(func):
+    res = {}
+
+    def memoized_func(oil):
+        if oil.adios_oil_id not in res:
+            res[oil.adios_oil_id] = func(oil)
+
+        return res[oil.adios_oil_id]
+
+    return memoized_func
+
+
 @oil_api.get()
 def get_oils(request):
     session = _get_db_session()
@@ -25,22 +37,7 @@ def get_oils(request):
     if not obj_id:
         # Return all oils in JSON format.  We only return the searchable
         # columns.
-        oils = session.query(Oil)
-        return [{'adios_oil_id': o.imported.adios_oil_id,
-                 'name': o.name,
-                 'location': o.imported.location,
-                 'field_name': o.imported.field_name,
-                 'product_type': o.imported.product_type,
-                 'oil_class': o.imported.oil_class,
-                 'api': o.api,
-                 'pour_point': get_pour_point(o),
-                 'viscosity': get_oil_viscosity(o),
-                 'categories': get_category_paths(o),
-                 'categories_str': get_category_paths_str(o),
-                 'synonyms': get_synonyms(o),
-                 'quality_index': o.quality_index
-                 }
-                for o in oils]
+        return [get_oil_searchable_fields(o) for o in session.query(Oil)]
     else:
         try:
             oil = (session.query(Oil).join(ImportedRecord)
@@ -49,6 +46,24 @@ def get_oils(request):
             return prune_oil_json(oil.tojson())
         except NoResultFound:
             raise HTTPNotFound()
+
+
+@memoize_oil_arg
+def get_oil_searchable_fields(oil):
+    return {'adios_oil_id': oil.imported.adios_oil_id,
+            'name': oil.name,
+            'location': oil.imported.location,
+            'field_name': oil.imported.field_name,
+            'product_type': oil.imported.product_type,
+            'oil_class': oil.imported.oil_class,
+            'api': oil.api,
+            'pour_point': get_pour_point(oil),
+            'viscosity': get_oil_viscosity(oil),
+            'categories': get_category_paths(oil),
+            'categories_str': get_category_paths_str(oil),
+            'synonyms': get_synonyms(oil),
+            'quality_index': oil.quality_index
+            }
 
 
 def get_category_paths(oil, sep='-'):
