@@ -207,7 +207,7 @@ It returns a JSON structure similar to the example below:
  }
 ```
 
-## Example usage of teh API
+## Example usage of the API
 
 Here is some example Python code that uses the API:
 
@@ -223,8 +223,8 @@ some example code to access the oil_library API
 import requests
 
 # this is the currently running server at NOAA
-# (as of 1/11/2017 -- no guarantees as to what it will be in the future)
-base_url = "http://161.55.65.31:443/"
+# (as of 3/07/2018 -- no guarantees as to what it will be in the future)
+base_url = "https://oillibraryapi.orr.noaa.gov:80/"
 
 # if running locally, it may be something like:
 # base_url = "http://0.0.0.0:9898"
@@ -248,6 +248,8 @@ for k in all_oils[37].keys():
 # find one with "alaska" in the name:
 alaska_oils = [(rec['name'], rec['adios_oil_id']) for rec in all_oils if "alaska" in rec['name'].lower()]
 
+print "\n*********"
+print 'All oils with "alaska" in the name:'
 for oil in alaska_oils:
     print oil
 
@@ -259,12 +261,15 @@ r = requests.get(oil_url + "/AD01760")
 record = r.json()
 
 #Lots of info there:
+print "\n*********"
 print "Here are all the fields in a complete record:"
 for k in record.keys():
     print k
 
 # for instance, here are the densities measured:
 # two in this case
+print "\n*********"
+print "And here are the density fields:"
 for density in record['densities']:
     print density
 
