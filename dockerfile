@@ -1,4 +1,4 @@
-FROM gitlab.orr.noaa.gov:5002/oil_library:latest
+FROM oillibrary
 
 COPY ./ /oillibraryapi/
 RUN cd /oillibraryapi/ && pip install -r requirements.txt
