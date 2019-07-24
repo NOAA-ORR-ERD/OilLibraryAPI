@@ -5,6 +5,9 @@ pyramid_tm
 cornice
 waitress
 
+# need the redis server
+redis
+
 # required for testing
 # WebTest
 # pytest
