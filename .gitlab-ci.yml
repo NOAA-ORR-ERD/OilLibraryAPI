@@ -2,7 +2,7 @@ master:
     only:
         - master
     script:
-        - docker pull gitlab.orr.noaa.gov:5002/oillibrary:latest 
+        - docker pull gitlab.orr.noaa.gov:5002/oillibrary
         - docker tag gitlab.orr.noaa.gov:5002/oillibrary:latest oillibrary
         - docker build -f dockerfile . -t gitlab.orr.noaa.gov:5002/oillibraryapi:latest
         - docker push gitlab.orr.noaa.gov:5002/oillibraryapi:latest
