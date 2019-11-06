@@ -1,3 +1,15 @@
+develop:
+    only:
+        - develop
+    script:
+        - docker pull gitlab.orr.noaa.gov:5002/oillibrary:develop
+        - docker tag gitlab.orr.noaa.gov:5002/oillibrary:develop oillibrary
+        - docker build -f dockerfile . -t gitlab.orr.noaa.gov:5002/oillibraryapi:develop
+        - docker push gitlab.orr.noaa.gov:5002/oillibraryapi:develop
+    tags:
+        - shell
+        - build
+        
 master:
     only:
         - master
