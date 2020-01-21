@@ -4,6 +4,7 @@ from cornice import Service
 from pyramid.httpexceptions import HTTPNotFound
 
 from ..common.views import cors_policy, obj_id_from_url
+from oil import get_oil_searchable_fields
 
 from oil_library import _get_db_session
 from oil_library.models import ImportedRecord, Oil, Category
@@ -23,8 +24,7 @@ def get_gnome_oil(request):
     if not obj_id:
         # Return all oils in JSON format.  We only return the searchable
         # columns.
-        #return [get_oil_searchable_fields(o) for o in session.query(Oil)]
-        return
+        return [get_oil_searchable_fields(o) for o in session.query(Oil)]
     else:
         try:
             oil = (session.query(Oil).join(ImportedRecord)
