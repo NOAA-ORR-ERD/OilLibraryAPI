@@ -23,7 +23,8 @@ def get_gnome_oil(request):
     if not obj_id:
         # Return all oils in JSON format.  We only return the searchable
         # columns.
-        return [get_oil_searchable_fields(o) for o in session.query(Oil)]
+        #return [get_oil_searchable_fields(o) for o in session.query(Oil)]
+        return
     else:
         try:
             oil = (session.query(Oil).join(ImportedRecord)
