@@ -3,6 +3,8 @@
 from cornice import Service
 from pyramid.httpexceptions import HTTPNotFound
 
+from sqlalchemy.orm.exc import NoResultFound
+
 from ..common.views import cors_policy, obj_id_from_url
 from oil import get_oil_searchable_fields
 
