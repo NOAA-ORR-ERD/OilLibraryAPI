@@ -1,11 +1,26 @@
+develop:
+    only:
+        - develop
+    script:
+        - docker pull gitlab.orr.noaa.gov:5002/oillibrary:develop
+        - docker tag gitlab.orr.noaa.gov:5002/oillibrary:develop oillibrary
+        - docker build -f dockerfile . -t gitlab.orr.noaa.gov:5002/oillibraryapi:develop
+        - docker push gitlab.orr.noaa.gov:5002/oillibraryapi:develop
+    tags:
+        - shell
+        - build
+        
 master:
     only:
         - master
     script:
-        - docker pull gitlab.orr.noaa.gov:5002/oillibrary:latest 
-        - docker tag gitlab.orr.noaa.gov:5002/oillibrary:latest oillibrary
+        - docker pull gitlab.orr.noaa.gov:5002/oillibrary:master
+        - docker tag gitlab.orr.noaa.gov:5002/oillibrary:master oillibrary
         - docker build -f dockerfile . -t gitlab.orr.noaa.gov:5002/oillibraryapi:latest
         - docker push gitlab.orr.noaa.gov:5002/oillibraryapi:latest
+    tags:
+        - shell
+        - build
 
 production:
     only:
@@ -15,3 +30,6 @@ production:
         - docker tag gitlab.orr.noaa.gov:5002/oillibrary:production oillibrary
         - docker build -f dockerfile . -t gitlab.orr.noaa.gov:5002/oillibraryapi:production
         - docker push gitlab.orr.noaa.gov:5002/oillibraryapi:production
+    tags:
+        - shell
+        - build

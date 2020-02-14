@@ -1,6 +1,7 @@
 """ Cornice services.
 """
 import re
+import logging
 
 from cornice import Service
 from pyramid.httpexceptions import HTTPNotFound
@@ -17,11 +18,16 @@ oil_api = Service(name='oil', path='/oil*obj_id',
                   description="List All Oils",  cors_policy=cors_policy)
 
 
+logger = logging.getLogger(__name__)
+
+
 def memoize_oil_arg(func):
     res = {}
 
     def memoized_func(oil):
         if oil.adios_oil_id not in res:
+            logger.info('loading in-memory oil dict.  Key: "{}"'
+                        .format(oil.adios_oil_id))
             res[oil.adios_oil_id] = func(oil)
 
         return res[oil.adios_oil_id]
