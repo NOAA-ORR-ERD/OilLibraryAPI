@@ -1,12 +1,16 @@
 """ Cornice services.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 from cornice import Service
 from pyramid.httpexceptions import HTTPNotFound
 
 from sqlalchemy.orm.exc import NoResultFound
 
 from ..common.views import cors_policy, obj_id_from_url
-from oil import get_oil_searchable_fields
+from .oil import get_oil_searchable_fields
 
 from oil_library import _get_db_session
 from oil_library.models import ImportedRecord, Oil, Category
