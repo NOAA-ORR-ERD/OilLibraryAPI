@@ -1,0 +1,20 @@
+python=3.8.*
+
+
+pyramid
+paste
+ujson
+pyramid_tm
+cornice
+waitress
+
+# need the redis server
+redis
+
+# required for testing
+# WebTest
+# pytest
+
+# oil library is required, but not pip or conda installable
+# https://github.com/NOAA-ORR-ERD/OilLibrary
+# oil_library

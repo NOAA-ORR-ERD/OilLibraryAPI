@@ -1,6 +1,9 @@
 '''
     This is just a scratchpad script I use inside ipython
 '''
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 import oil_library
 from oil_library import get_oil, _get_db_session
@@ -12,7 +15,7 @@ pp = PrettyPrinter(indent=2)
 
 
 session = _get_db_session()
-print 'Our session:', session.connection().engine
+print('Our session:', session.connection().engine)
 
 # oil_obj = get_oil('LUCKENBACH FUEL OIL')
 oil_obj = get_oil('BAHIA')
@@ -24,7 +27,7 @@ oil_obj = session.query(Oil).filter(Oil.adios_oil_id == 'AD00584').one()
 
 my_str = oil_obj.imported.comments
 
-print my_str
+print(my_str)
 
 benz = get_oil(oil_library.sample_oils.benzene.json_data)
-print benz
+print(benz)

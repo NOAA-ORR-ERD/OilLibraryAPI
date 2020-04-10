@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import sys
 import os
 import transaction
@@ -36,7 +39,7 @@ def plot_oil_viscosities(settings):
             raise ValueError('adios_id setting is required.')
         adios_id = settings['adios_id']
 
-        print 'our session: %s' % (session)
+        print('our session: %s' % (session))
         try:
             oilobj = (session.query(Oil).join(ImportedRecord)
                       .filter(ImportedRecord.adios_oil_id == adios_id)
@@ -46,21 +49,21 @@ def plot_oil_viscosities(settings):
                                 .format(adios_id))
 
         if oilobj:
-            print 'Our oil object: %s' % (oilobj)
+            print('Our oil object: %s' % (oilobj))
 
             oil_props = OilProps(oilobj)
-            print '\nOilProps:', oil_props
-            print oil_props.kvis_at_temp()
+            print('\nOilProps:', oil_props)
+            print(oil_props.kvis_at_temp())
 
-            print '\nOur viscosities:'
-            print [v for v in oilobj.kvis]
+            print('\nOur viscosities:')
+            print([v for v in oilobj.kvis])
 
-            print '\nOur unweathered viscosities (m^2/s, Kdegrees):'
+            print('\nOur unweathered viscosities (m^2/s, Kdegrees):')
             vis = [v for v in oilobj.kvis if v.weathering <= 0.0]
-            print vis
+            print(vis)
             for i in [(v.m_2_s, v.ref_temp_k, v.weathering)
                       for v in vis]:
-                print i
+                print(i)
 
             x = np.array([v.ref_temp_k for v in vis]) - 273.15
             y = np.array([v.m_2_s for v in vis])
@@ -79,7 +82,7 @@ def plot_oil_viscosities(settings):
 
             # now we add the annotations
             for xx, yy in np.vstack((x, y)).transpose():
-                print (xx, yy)
+                print((xx, yy))
                 if xx > x.mean():
                     xalign = -xpadding / 3
                 else:
@@ -111,5 +114,5 @@ def main(argv=sys.argv, proc=plot_oil_viscosities):
     try:
         proc(settings)
     except:
-        print "{0} FAILED\n".format(proc)
+        print("{0} FAILED\n".format(proc))
         raise

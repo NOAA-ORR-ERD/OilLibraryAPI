@@ -1,6 +1,9 @@
 """
 Common Gnome object request handlers.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 cors_policy = {'credentials': True}
 
