@@ -1,7 +1,7 @@
 FROM oillibrary
 
 RUN yum install -y gcc
-    
+RUN conda install pip    
 COPY ./ /oillibraryapi/
 RUN cd /oillibraryapi/ && pip install -r requirements.txt
 RUN cd /oillibraryapi/ && pip install -e .
