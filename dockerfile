@@ -3,8 +3,8 @@ FROM oillibrary
 RUN yum install -y gcc
     
 COPY ./ /oillibraryapi/
-RUN cd /oillibraryapi/ && pip install -r requirements.txt
-RUN cd /oillibraryapi/ && pip install -e .
+RUN cd /oillibraryapi/ && pip3 install -r requirements.txt
+RUN cd /oillibraryapi/ && pip3 install -e .
  
 RUN mkdir /config
 RUN cp /oillibraryapi/config-example.ini /config/config.ini
