@@ -3,7 +3,7 @@ FROM oillibrary
 RUN yum install -y gcc
 COPY ./ /oillibraryapi/
 RUN cd /oillibraryapi/ && conda install --file conda_requirements.txt
-RUN cd /oillibraryapi/ && pip install -e .
+RUN cd /oillibraryapi/ && python setup.py develop
  
 RUN mkdir /config
 RUN cp /oillibraryapi/config-example.ini /config/config.ini
