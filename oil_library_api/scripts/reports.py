@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import os
 import sys
 import transaction
@@ -62,7 +65,7 @@ def audit_distillation_cuts(settings):
                        float(sum(num_cuts)) / len(num_cuts))
                )
 
-        print '\nLiquid Temperature:'
+        print('\nLiquid Temperature:')
         for i in range(len(liquid_temp)):
             if len(liquid_temp[i]) > 0:
                 temp = liquid_temp[i]
@@ -76,7 +79,7 @@ def audit_distillation_cuts(settings):
                        '({1}, {2}, {3}, {4})'
                        .format(i, len(temp), None, None, None))
 
-        print '\nVapor Temperature:'
+        print('\nVapor Temperature:')
         for i in range(len(vapor_temp)):
             print ('\tCut #{0} (set-size, min, max, avg): '
                    '({1}, {2}, {3}, {4})'
@@ -87,7 +90,7 @@ def audit_distillation_cuts(settings):
                            float(sum(vapor_temp[i])) / len(vapor_temp[i]))
                    )
 
-        print '\nFraction:'
+        print('\nFraction:')
         for i in range(len(fraction)):
             print ('\tCut #{0} (set-size, min, max, avg): '
                    '({1}, {2}, {3}, {4})'
@@ -98,7 +101,7 @@ def audit_distillation_cuts(settings):
                            float(sum(fraction[i])) / len(fraction[i]))
                    )
 
-        print 'finished!!!'
+        print('finished!!!')
 
 
 def audit_database(settings):
@@ -112,52 +115,52 @@ def audit_database(settings):
         sys.stderr.write('Auditing the records in database...')
         for o in session.query(ImportedRecord):
             if 1 and o.synonyms:
-                    print
-                    print [s.name for s in o.synonyms]
+                    print()
+                    print([s.name for s in o.synonyms])
 
             if 1 and o.densities:
-                    print
-                    print [d.kg_m_3 for d in o.densities]
-                    print [d.ref_temp_k for d in o.densities]
-                    print [d.weathering for d in o.densities]
+                    print()
+                    print([d.kg_m_3 for d in o.densities])
+                    print([d.ref_temp_k for d in o.densities])
+                    print([d.weathering for d in o.densities])
 
             if 1 and o.kvis:
-                    print
-                    print [k.m_2_s for k in o.kvis]
-                    print [k.ref_temp_k for k in o.kvis]
-                    print [k.weathering for k in o.kvis]
+                    print()
+                    print([k.m_2_s for k in o.kvis])
+                    print([k.ref_temp_k for k in o.kvis])
+                    print([k.weathering for k in o.kvis])
 
             if 1 and o.dvis:
-                    print
-                    print [d.kg_ms for d in o.dvis]
-                    print [d.ref_temp_k for d in o.dvis]
-                    print [d.weathering for d in o.dvis]
+                    print()
+                    print([d.kg_ms for d in o.dvis])
+                    print([d.ref_temp_k for d in o.dvis])
+                    print([d.weathering for d in o.dvis])
 
             if 1 and o.cuts:
-                    print
-                    print [c.vapor_temp_k for c in o.cuts]
-                    print [c.liquid_temp_k for c in o.cuts]
-                    print [c.fraction for c in o.cuts]
+                    print()
+                    print([c.vapor_temp_k for c in o.cuts])
+                    print([c.liquid_temp_k for c in o.cuts])
+                    print([c.fraction for c in o.cuts])
 
             if 1:
                 tox = [t for t in o.toxicities if t.tox_type == 'EC']
                 if tox:
-                    print
-                    print [t.species for t in tox]
-                    print [t.after_24h for t in tox]
-                    print [t.after_48h for t in tox]
-                    print [t.after_96h for t in tox]
+                    print()
+                    print([t.species for t in tox])
+                    print([t.after_24h for t in tox])
+                    print([t.after_48h for t in tox])
+                    print([t.after_96h for t in tox])
 
             if 1:
                 tox = [t for t in o.toxicities if t.tox_type == 'LC']
                 if tox:
-                    print
-                    print [t.species for t in tox]
-                    print [t.after_24h for t in tox]
-                    print [t.after_48h for t in tox]
-                    print [t.after_96h for t in tox]
+                    print()
+                    print([t.species for t in tox])
+                    print([t.after_24h for t in tox])
+                    print([t.after_48h for t in tox])
+                    print([t.after_96h for t in tox])
 
-        print 'finished!!!'
+        print('finished!!!')
 
 
 def export_database(settings):
@@ -170,8 +173,8 @@ def export_database(settings):
 
         sys.stderr.write('Exporting the records in database...')
         for o in session.query(Oil):
-            print o
-            print o.tojson()
+            print(o)
+            print(o.tojson())
 
 
 def export(argv=sys.argv):
@@ -201,5 +204,5 @@ def main(argv=sys.argv, proc=export_database):
     try:
         proc(settings)
     except:
-        print "{0} FAILED\n".format(proc)
+        print("{0} FAILED\n".format(proc))
         raise

@@ -1,7 +1,7 @@
-python=2.7.*
+python=3.8.*
+
 
 pyramid
-repoze.lru
 paste
 ujson
 pyramid_tm

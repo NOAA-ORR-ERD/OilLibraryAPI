@@ -1,5 +1,8 @@
 """ Setup file.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 import os
 import glob
 import shutil
@@ -30,7 +33,7 @@ def clean_files():
         except:
             pass
 
-        print "Deleting {0} ..".format(f)
+        print("Deleting {0} ..".format(f))
 
 
 class cleanall(clean):
