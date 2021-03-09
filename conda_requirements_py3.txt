@@ -1,11 +1,11 @@
 python=3.8.*
 
 
-pyramid
+pyramid>=1.10.1,<2
 paste
 ujson
 pyramid_tm
-cornice
+cornice>=3.4
 waitress
 
 # need the redis server
